@@ -144,7 +144,7 @@ class StellariumToImages:
     param_date = "$DATE$"
     param_timespan = $TIMESPAN$
     param_fov = $FOV$
-    param_dt=$DELTAT$
+    //param_dt=$DELTAT$
     
     function getImages(date, file_prefix, caption, hours, long, lat, alt, azi)
     {
@@ -242,7 +242,7 @@ class StellariumToImages:
         script = script.replace("$LONG$", str(self.__args.long));
         #script = script.replace("$TITLE$", str(self.__args.title));
         script = script.replace("$DATE$", sunset_date)
-        #script = script.replace("$TIMESPAN$", str(self.__args.timespan))
+        script = script.replace("$TIMESPAN$", str(self.__args.timespan))
         script = script.replace("$FOV$", str(self.__args.fov))
         #script = script.replace("$DELTAT$", str(self.__args.dt))
         script = script.replace("$AZ$", str(self.__args.az))
@@ -308,7 +308,7 @@ def main():
     #parser.add_argument("-fps", "--FramesPerSecond", dest="fps", help='Frame rate of the output video', default='30', type=positive_number)
     parser.add_argument("-fov", "--FieldOfView", dest="fov", help='The field of view', default='70', type=float)
     #parser.add_argument("-t", "--Title", dest="title", help='Caption of the video', required=True)
-    #parser.add_argument("-ts", "--TimeSpan",dest="timespan", help='Number of hoursto simulate', default='2', type=positive_number)
+    parser.add_argument("-ts", "--TimeSpan",dest="timespan", help='Number of hoursto simulate', default='2', type=positive_number)
     #parser.add_argument("-dt", "--DeltaT", dest="dt", help='Simulated time between two Frames', default='10')
     #parser.add_argument("-o", "--Outfile", dest="outfile", help='Output filename', default='out.mp4')
     #parser.add_argument("-s", "--Show", dest="show_video", default=False, action='store_true', help='If this flag is set the video is shown after rendering (VLC must be installed)')
