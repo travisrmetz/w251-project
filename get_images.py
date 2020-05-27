@@ -212,8 +212,8 @@ class StellariumToImages:
 
     def __init__(self, args):
         self.__args = args
-        self.__frame_folder ="{0}/sky_frames".format(tempfile.gettempdir())
-        self.__final_file = self.__frame_folder + "/final.png";
+        self.__frame_folder ="{0}/sky_frames".format(Path.home())
+        #self.__final_file = self.__frame_folder + "/final.png";
 
         # Create frame folder if it not already exists
         if os.path.exists(self.__frame_folder):
@@ -261,9 +261,9 @@ class StellariumToImages:
         # wait for script finish
         s = 0
         timeout = 600
-        while not os.path.exists(self.__final_file) and s < timeout:
-            xxx.sleep(1)
-            s = s + 1
+        #while not os.path.exists(self.__final_file) and s < timeout:
+            #xxx.sleep(1)
+            #s = s + 1
 
         proc_stellarium.kill()
 
@@ -325,6 +325,7 @@ def main():
     print("Position: long={0}; lat={1}".format(args.long, args.lat))
 
     # Check if there is a local stellarium folder
+    print('Home path:',Path.home())
     if not os.path.isdir("{0}/.stellarium".format(Path.home())):
         print("Stellarium does not seem to be installed!")
 
