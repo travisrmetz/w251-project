@@ -144,7 +144,7 @@ class StellariumToImages:
     param_date = "$DATE$"
     param_timespan = $TIMESPAN$
     param_fov = $FOV$
-    param_dt=$DELTAT$
+    //param_dt=$DELTAT$
     
     function getImages(date, file_prefix, caption, hours, long, lat, alt, azi)
     {
@@ -170,7 +170,7 @@ class StellariumToImages:
         //    LabelMgr.setLabelText(labelTime, core.getDate(""));
         //    core.wait(0.1);
         //    core.screenshot(file_prefix);
-        }
+        //}
 
         LabelMgr.deleteAllLabels();
     }
@@ -207,12 +207,12 @@ class StellariumToImages:
 
     getImages(param_date, "frame_", param_title, param_timespan, param_long, param_lat, param_alt, param_az)
     core.screenshot("final", invert=false, dir=param_frame_folder, overwrite=true);
-    //core.setGuiVisible(true);
+    core.setGuiVisible(true);
     core.quitStellarium();"""
 
     def __init__(self, args):
         self.__args = args
-        self.__frame_folder ="{0}/sky_frames".format(tempfile.gettempdir())
+        self.__frame_folder ="{0}/sky_frames".format(Path.home())
         self.__final_file = self.__frame_folder + "/final.png";
 
         # Create frame folder if it not already exists
@@ -235,7 +235,6 @@ class StellariumToImages:
         sunset_date = "{0}T{1}".format(self.__args.date.strftime("%Y-%m-%d"), sunset_time.strftime("%H:%M:%S"))
         print("Sunset: {0}".format(sunset_date))
 
-        # Ersetzen der Skriptvariablen
         #replacing variables in script before inserting it into appropriate folder
         script = self.__script;
         script = script.replace("$FRAME_FOLDER$", self.__frame_folder);
@@ -243,7 +242,7 @@ class StellariumToImages:
         script = script.replace("$LONG$", str(self.__args.long));
         #script = script.replace("$TITLE$", str(self.__args.title));
         script = script.replace("$DATE$", sunset_date)
-        #script = script.replace("$TIMESPAN$", str(self.__args.timespan))
+        script = script.replace("$TIMESPAN$", str(self.__args.timespan))
         script = script.replace("$FOV$", str(self.__args.fov))
         #script = script.replace("$DELTAT$", str(self.__args.dt))
         script = script.replace("$AZ$", str(self.__args.az))
@@ -256,6 +255,7 @@ class StellariumToImages:
 
     def create_frames(self):
         #this runs script by calling stellarium with startup script
+        print('About to try and start stellarium and call script')
         proc_stellarium = subprocess.Popen(['stellarium', '--startup-script', 'get_sky.ssc', '--screenshot-dir', self.__frame_folder], stdout=subprocess.PIPE);
 
         # wait for script finish
@@ -308,7 +308,7 @@ def main():
     #parser.add_argument("-fps", "--FramesPerSecond", dest="fps", help='Frame rate of the output video', default='30', type=positive_number)
     parser.add_argument("-fov", "--FieldOfView", dest="fov", help='The field of view', default='70', type=float)
     #parser.add_argument("-t", "--Title", dest="title", help='Caption of the video', required=True)
-    #parser.add_argument("-ts", "--TimeSpan",dest="timespan", help='Number of hoursto simulate', default='2', type=positive_number)
+    parser.add_argument("-ts", "--TimeSpan",dest="timespan", help='Number of hoursto simulate', default='2', type=positive_number)
     #parser.add_argument("-dt", "--DeltaT", dest="dt", help='Simulated time between two Frames', default='10')
     #parser.add_argument("-o", "--Outfile", dest="outfile", help='Output filename', default='out.mp4')
     #parser.add_argument("-s", "--Show", dest="show_video", default=False, action='store_true', help='If this flag is set the video is shown after rendering (VLC must be installed)')
@@ -325,6 +325,7 @@ def main():
     print("Position: long={0}; lat={1}".format(args.long, args.lat))
 
     # Check if there is a local stellarium folder
+    print('Home path:',Path.home())
     if not os.path.isdir("{0}/.stellarium".format(Path.home())):
         print("Stellarium does not seem to be installed!")
 

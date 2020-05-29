@@ -1,0 +1,10 @@
+# YAML file for automated .ssc script generation
+---
+script_path: "/home/greg/.stellarium/scripts/"
+image_path: "/data/stars/images"
+azi: 0
+alt: 89
+fov: 90
+lat: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+long: [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130]
+date: '2020-05-25T00:59:02'
