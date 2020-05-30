@@ -2,6 +2,9 @@
 ---
 script_path: "/home/greg/.stellarium/scripts/"
 image_path: "/data/stars/images"
+bucket: "rza-cos-standard-l5d"
+endpoint: "https://s3.us-east.cloud-object-storage.appdomain.cloud"
+password_file: "/data/credentials_file"
 azi: 0
 alt: 89
 fov: 90
