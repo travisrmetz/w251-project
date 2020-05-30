@@ -1,13 +1,23 @@
 # YAML file for automated .ssc script generation
 ---
-script_path: "/home/greg/.stellarium/scripts/"
-image_path: "/data/stars/images"
-bucket: "rza-cos-standard-l5d"
-endpoint: "https://s3.us-east.cloud-object-storage.appdomain.cloud"
-password_file: "/data/credentials_file"
+script_path: "/home/trmetz/.stellarium/scripts/"
+image_path: "/home/trmetz/w251-project/images"
+#bucket: "rza-cos-standard-l5d"
+#endpoint: "https://s3.us-east.cloud-object-storage.appdomain.cloud"
+#password_file: "/data/credentials_file"
 azi: 0
 alt: 89
 fov: 90
 lat: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 long: [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130]
 date: '2020-05-25T00:59:02'
+apikey: "Ez3koqAaPEIWolmsVYTverPHj_qmohAFSWBqYJxtUT4v"
+endpoints: "https://control.cloud-object-storage.cloud.ibm.com/v2/endpoints"
+iam_apikey_description: "Auto-generated for key 976f4328-4e6d-418e-a626-9aaa163a4d21"
+iam_apikey_name: "Service credentials-1"
+iam_role_crn: "crn:v1:bluemix:public:iam::::serviceRole:Writer"
+iam_serviceid_crn: "crn:v1:bluemix:public:iam-identity::a/9e91cf7266454e46a288688a24b9773f::serviceid:ServiceId-cad3853e-9f87-41f7-84ac-6affc28c9ead"
+resource_instance_id: "crn:v1:bluemix:public:cloud-object-storage:global:a/9e91cf7266454e46a288688a24b9773f:4d62c3b5-87ee-479e-8994-d0ccf2962287::"
+bucket: "s3-trm"
+auth_endpoint: "https://iam.bluemix.net/identity/token"
+service_endpoint: "https://s3.us-east.cloud-object-storage.appdomain.cloud"

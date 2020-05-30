@@ -1,5 +1,8 @@
 import yaml
 import subprocess
+import os
+from ibm_botocore.client import Config
+import ibm_boto3
 
 def main():
     """
@@ -43,10 +46,16 @@ def main():
             f.write('core.moveToAltAzi({}, {});\n'.format(alt, azi))
             f.write('core.screenshot("{}", invert=false, dir="{}", overwrite=true);\n'.format('image' + str(image_index), image_dir))
             image_index += 1
-        f.write('core.setGuiVisible(true);')
+        f.write('core.setGuiVisible(false);\n')
+        f.write('core.quitStellarium();')
     
     # Open Stellarium and run the script
     proc_stellarium = subprocess.Popen(['stellarium', '--startup-script', 'get_multi_sky.ssc', '--screenshot-dir', image_dir], stdout=subprocess.PIPE)
+
+    # write files to S3
+    
+    
+
 
 if __name__ == "__main__":
     main()
