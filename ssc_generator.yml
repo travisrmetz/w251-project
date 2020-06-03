@@ -1,6 +1,7 @@
 # YAML file for automated .ssc script generation
+# converted paths for TRM jetson
 ---
-script_path: "/home/greg/.stellarium/scripts/"
+script_path: "/home/trmetz/.stellarium/scripts/"
 image_path: "/data/stars/images"
 bucket: "rza-cos-standard-l5d"
 endpoint: "https://s3.us-east.cloud-object-storage.appdomain.cloud"
@@ -8,6 +9,10 @@ password_file: "/data/credentials_file"
 azi: 0
 alt: 89
 fov: 90
-lat: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-long: [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130]
+latstart: 40.0
+latend: 40.2
+meters_lat_slice: 1000
+longstart: -70.0
+longend: -69.9999
+meters_long_slice: 1000
 date: '2020-05-25T00:59:02'

@@ -1,5 +1,7 @@
 import yaml
 import subprocess
+import geopy
+from sky_helper import next_lat, next_long,get_file_name
 
 def main():
     """
@@ -22,8 +24,12 @@ def main():
     azi = config_data['azi']
     alt = config_data['alt']
     fov = config_data['fov']
-    lat = config_data['lat']
-    long = config_data['long']
+    latstart = config_data['latstart']
+    latend=config_data['latend']
+    meters_lat_slice=config_data['meters_lat_slice']
+    longstart = config_data['longstart']
+    longend=config_data['longend']
+    meters_long_slice=config_data['meters_long_slice']
     date = config_data['date']
 
     # Write the ssc file
@@ -36,17 +42,40 @@ def main():
         f.write('LandscapeMgr.setFlagAtmosphere(true);\n')
         f.write('StelMovementMgr.zoomTo({},0);\n'.format(fov))
         f.write('core.setGuiVisible(false);\n')
-        for i, j in zip(long, lat):
-            f.write('core.setObserverLocation({}, {}, 15, 1, "Ocean", "Earth");\n'.format(i, j))
-            # The next statement needs to be repeated to generate stable images.
-            # It seems that Stellarium doesn't like altitudes of 90 degrees.
-            f.write('core.moveToAltAzi({}, {});\n'.format(alt, azi))
-            f.write('core.screenshot("{}", invert=false, dir="{}", overwrite=true);\n'.format('image' + str(image_index), image_dir))
-            image_index += 1
-        f.write('core.setGuiVisible(true);')
+        i=latstart
+        j=longstart
+        #print ('latstart,latend:',latstart,latend)
+        #print('longstart,longend',longstart,longend)
+        image_counter=0
+        while j<longend:
+            while i<latend:
+                #print (i,j)
+                #this does not seem to be working to eliminate labels
+                #or somehow it just eliminates labels from first pic?
+                f.write('StarMgr.setLabelsAmount(0);\n')
+                f.write('core.setObserverLocation({}, {}, 15, 1, "Ocean", "Earth");\n'.format(i, j))
+                # The next statement needs to be repeated to generate stable images.
+                # It seems that Stellarium doesn't like altitudes of 90 degrees.
+                f.write('core.moveToAltAzi({}, {});\n'.format(alt, azi))
+                file_name=get_file_name(i,j,date)
+                f.write('core.screenshot("{}", invert=false, dir="{}", overwrite=true);\n'.format(get_file_name(i,j,date), image_dir))
+                i=next_lat(i,j,meters_lat_slice)
+                image_counter+=1
+            i=latstart
+            j=next_long(i,j,meters_long_slice)
+        
+        print('Creating #:', image_counter)
     
     # Open Stellarium and run the script
     proc_stellarium = subprocess.Popen(['stellarium', '--startup-script', 'get_multi_sky.ssc', '--screenshot-dir', image_dir], stdout=subprocess.PIPE)
 
 if __name__ == "__main__":
     main()
+
+
+#TODO
+#set lens
+#automate slicing and dicing
+#do automatic filename generation
+#containerize
+#confirm moving to S3
