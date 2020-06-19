@@ -38,10 +38,10 @@ def main():
         # TODO:  Add statements to eliminate labels in the images.
         # TODO:  Allow time to be read in as a list (move the following
         #        line to the loop).
-        f.write('core.setDate("{}", "utc");\n'.format(date))
-        f.write('LandscapeMgr.setFlagAtmosphere(true);\n')
-        f.write('StelMovementMgr.zoomTo({},0);\n'.format(fov))
-        f.write('core.setGuiVisible(false);\n')
+        #f.write('core.setDate("{}", "utc");\n'.format(date))
+        #f.write('LandscapeMgr.setFlagAtmosphere(true);\n')
+        #f.write('StelMovementMgr.zoomTo({},0);\n'.format(fov))
+        #f.write('core.setGuiVisible(false);\n')
         i=latstart
         j=longstart
         #print ('latstart,latend:',latstart,latend)
@@ -49,10 +49,16 @@ def main():
         image_counter=0
         while j<longend:
             while i<latend:
+                f.write('core.setDate("{}", "utc");\n'.format(date))
+                f.write('LandscapeMgr.setFlagAtmosphere(true);\n')
+                f.write('StelMovementMgr.zoomTo({},0);\n'.format(fov))
+                f.write('core.setGuiVisible(false);\n')
                 #print (i,j)
                 #this does not seem to be working to eliminate labels
                 #or somehow it just eliminates labels from first pic?
                 f.write('StarMgr.setLabelsAmount(0);\n')
+                f.write('SolarSystem.setFlagLabels(false);\n')
+                f.write('MeteorShowers.setEnableMarker(false);\n')
                 f.write('core.setObserverLocation({}, {}, 15, 1, "Ocean", "Earth");\n'.format(i, j))
                 # The next statement needs to be repeated to generate stable images.
                 # It seems that Stellarium doesn't like altitudes of 90 degrees.
@@ -74,8 +80,7 @@ if __name__ == "__main__":
 
 
 #TODO
+#get rid of labels
 #set lens
-#automate slicing and dicing
-#do automatic filename generation
 #containerize
 #confirm moving to S3

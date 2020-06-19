@@ -13,6 +13,6 @@ latstart: 0
 latend: 0.01
 meters_lat_slice: 1000000
 longstart: 0.0
-longend: 130
+longend: 10
 meters_long_slice: 100000
 date: '2020-05-25T00:59:02'
