@@ -9,10 +9,10 @@ password_file: "/data/credentials_file"
 azi: 0
 alt: 89
 fov: 90
-latstart: 40.0
-latend: 40.2
-meters_lat_slice: 1000
-longstart: -70.0
-longend: -69.9999
-meters_long_slice: 1000
+latstart: 0
+latend: 0.01
+meters_lat_slice: 1000000
+longstart: 0.0
+longend: 130
+meters_long_slice: 100000
 date: '2020-05-25T00:59:02'
