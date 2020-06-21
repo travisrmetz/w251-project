@@ -3,16 +3,17 @@
 ---
 script_path: "/home/trmetz/.stellarium/scripts/"
 image_path: "/data/stars/images"
-bucket: "rza-cos-standard-l5d"
-endpoint: "https://s3.us-east.cloud-object-storage.appdomain.cloud"
-password_file: "/data/credentials_file"
+#bucket: "rza-cos-standard-l5d"
+#endpoint: "https://s3.us-east.cloud-object-storage.appdomain.cloud"
+#password_file: "/data/credentials_file"
 azi: 0
 alt: 89
 fov: 90
-latstart: 0
-latend: 0.01
-meters_lat_slice: 1000000
-longstart: 0.0
-longend: 10
-meters_long_slice: 100000
+latstart: 43
+latend: 44
+meters_lat_slice: 1000
+longstart: -69
+longend: -69
+meters_long_slice: 1000
 date: '2020-05-25T00:59:02'
+number_images: 50
