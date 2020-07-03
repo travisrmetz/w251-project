@@ -1,7 +1,8 @@
 import yaml
 import subprocess
 #import geopy
-from sky_helper import next_lat, next_long,get_file_name
+#from sky_helper import next_lat, next_long,get_file_name
+from sky_helper import get_file_name
 import random
 
 def main():
