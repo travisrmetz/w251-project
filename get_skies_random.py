@@ -1,6 +1,6 @@
 import yaml
 import subprocess
-import geopy
+#import geopy
 from sky_helper import next_lat, next_long,get_file_name
 import random
 
