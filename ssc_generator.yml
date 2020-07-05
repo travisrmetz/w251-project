@@ -10,11 +10,13 @@ aws_s3_bucket: "w251-final-project"
 azi: 0
 alt: 89
 fov: 90
-latstart: 40
+latstart: 30
 latend: 50
-meters_lat_slice: 1000
 longstart: -70
-longend: -60
-#meters_long_slice: 1000
+longend: -50
 date: '2020-07-04T01:00:00'
 number_images: 5000
+
+#used these in grid work 
+#meters_lat_slice: 1000
+#meters_long_slice: 1000
