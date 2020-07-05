@@ -47,7 +47,7 @@ def main():
             j=random.uniform(longstart,longend)
             print (x,i,j)
             #write script for gathering image from that location
-            f.write('core.setDate("{}", "utc");\n'.format(date))
+            f.write('core.setDate("{}", "local");\n'.format(date))
             f.write('LandscapeMgr.setFlagAtmosphere(true);\n')
             f.write('StelMovementMgr.zoomTo({},0);\n'.format(fov))
             f.write('core.setGuiVisible(false);\n')
