@@ -30,3 +30,7 @@ print ('emptying s3 bucket:', bucket_name)
 empty_s3_bucket(bucket_name)
 
 print ('removing image files:', image_dir)
+file_list=os.listdir(image_dir)
+for file_name in file_list:
+  file_delete=os.path.join(image_dir,file_name)
+  os.remove(file_delete)
