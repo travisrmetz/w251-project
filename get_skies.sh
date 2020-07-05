@@ -1,9 +1,11 @@
 #!/bin/sh
 
-#ssc_generator.yml has default values to use for items
-
 #first delete all images on local drive and up in S3
 python3 delete_images.py
+
+#should allow for google drive to also populate for use on colab
+#maybe have to mount with -o nonempty
+google-drive-ocamlfuse /w251-project/stars
 
 #then generate random images from box defined by ssc_generatory.yml
 python3 get_skies_random.py 
