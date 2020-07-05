@@ -3,6 +3,7 @@
 ---
 script_path: "/home/trmetz/.stellarium/scripts/"
 image_path: "/w251-project/stars/images"
+aws_s3_bucket: "w251-final-project"
 #bucket: "rza-cos-standard-l5d"
 #endpoint: "https://s3.us-east.cloud-object-storage.appdomain.cloud"
 #password_file: "/data/credentials_file"
