@@ -1,5 +1,5 @@
 #### start tf2 keras container on jetson
-docker run --name tf2_keras -v /w251-project:/w251-project --privileged --rm -p 8888:8888 -d --memory="500m" --memory-swap="2g" project_tf2_keras
+docker run --name tf2_keras -v /w251-project:/w251-project --privileged --rm -p 8888:8888 -d --memory="500m" --memory-swap="2g" -e DISPLAY=$DISPLAY project_tf2_keras
 docker logs tf2_keras
 docker exec -ti tf2_keras bash
 
