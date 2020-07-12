@@ -1,8 +1,8 @@
 
 ### big vm on AWS
-ssh -L localhost:8888:localhost:8888 -i /Users/travismetz/Dropbox/DesktopFolder/aws/trm-private-key.pem ubuntu@ec2-3-135-191-182.us-east-2.compute.amazonaws.com
+ssh -L localhost:8888:localhost:8888 -i /Users/travismetz/Dropbox/DesktopFolder/aws/trm-private-key.pem ubuntu@ec2-3-12-77-52.us-east-2.compute.amazonaws.com
 
-ssh -i /Users/travismetz/Dropbox/DesktopFolder/aws/trm-private-key.pem ubuntu@ec2-3-135-191-182.us-east-2.compute.amazonaws.com
+ssh -i /Users/travismetz/Dropbox/DesktopFolder/aws/trm-private-key.pem ubuntu@ec2-3-12-77-52.us-east-2.compute.amazonaws.com
 
 #### commands to get vm ready
 git clone https://github.com/travisrmetz/w251-project.git
@@ -10,7 +10,11 @@ sudo apt install nmon
 source activate tensorflow2_latest_p37 (on big vm)
 git branch -a
 git checkout [branch]
-aws configure (use secret codes and us-east-2)
+aws configure 
+
+#### memory and disk
+free -h
+df
 
 
 ### starting smaller aws machine in previous iteration
