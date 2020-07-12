@@ -8,14 +8,14 @@ aws_s3_bucket: "w251-final-project"
 #endpoint: "https://s3.us-east.cloud-object-storage.appdomain.cloud"
 #password_file: "/data/credentials_file"
 azi: 0
-alt: 89
-fov: 90
+alt: 70
+fov: 120
 latstart: 30
 latend: 50
 longstart: -70
 longend: -50
 date: '2020-07-04T01:00:00'
-number_images: 5000
+number_images: 100
 
 #used these in grid work 
 #meters_lat_slice: 1000
