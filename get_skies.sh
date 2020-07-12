@@ -5,7 +5,7 @@ python3 delete_images.py
 
 #should allow for google drive to also populate for use on colab
 #maybe have to mount with -o nonempty
-google-drive-ocamlfuse /w251-project/stars
+#google-drive-ocamlfuse /w251-project/stars
 
 #then generate random images from box defined by ssc_generatory.yml
 python3 get_skies_random.py 
