@@ -47,17 +47,22 @@ def main():
             j=random.uniform(longstart,longend)
             print (x,i,j)
             #write script for gathering image from that location
-            f.write('core.setDate("{}", "local");\n'.format(date))
+            f.write('core.setObserverLocation({}, {}, 15, 0, "Ocean", "Earth");\n'.format(i, j))
+            f.write('core.setDate("{}", spec="local");\n'.format(date))
+            f.write('core.moveToAltAzi({}, {});\n'.format(alt, azi))
             f.write('LandscapeMgr.setFlagAtmosphere(true);\n')
             f.write('StelMovementMgr.zoomTo({},0);\n'.format(fov))
+            f.write('LandscapeMgr.setFlagCardinalsPoints(false);\n')
             f.write('core.setGuiVisible(false);\n')
             f.write('StarMgr.setLabelsAmount(0);\n')
             f.write('SolarSystem.setFlagLabels(false);\n')
             f.write('MeteorShowers.setEnableMarker(false);\n')
-            f.write('core.setObserverLocation({}, {}, 15, 1, "Ocean", "Earth");\n'.format(i, j))
+            f.write('LandscapeMgr.setFlagLandscapeSetsLocation(false);\n')
+            f.write('LandscapeMgr.setCurrentLandscapeName("Ocean");\n')
+            f.write('core.wait(1);\n')
+
             # The next statement needs to be repeated to generate stable images.
             # It seems that Stellarium doesn't like altitudes of 90 degrees.
-            f.write('core.moveToAltAzi({}, {});\n'.format(alt, azi))
             file_name=get_file_name(i,j,date)
             f.write('core.screenshot("{}", invert=false, dir="{}", overwrite=true);\n'.format(get_file_name(i,j,date), image_dir))
             
