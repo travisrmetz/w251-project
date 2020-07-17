@@ -1,9 +1,11 @@
 ### commands for inference container
 #### build proper docker container with cv2 etc
-docker build -t inference-image -f Dockerfile .
+docker build -t inference-image -f Dockerfile.inference .
 
 #### start tf2 keras container on jetson
-docker run --name inference -v /tmp:/tmp -v /w251-project:/w251-project --privileged --ti --rm -p 8888:8888 -d -e DISPLAY=$DISPLAY inference-image bash
+xhost +
+
+docker run --name inference --memory="8g" --memory-swap="16g" -v /tmp:/tmp -v /w251-project/inference/:/inference/ --net=host --runtime nvidia --privileged -ti --rm -p 8888:8888 -v /tmp/.X11-unix/:/tmp/.X11-unix:rw -e DISPLAY=$DISPLAY inference-image bash
+
 docker logs inference
-docker exec -ti tf2_keras bash
-#--memory="500m" --memory-swap="2g"
+docker exec -ti inference bash
