@@ -15,7 +15,7 @@ latend: 50
 longstart: -70
 longend: -50
 date: '2020-07-04T01:00:00'
-number_images: 100
+number_images: 2000
 
 #used these in grid work 
 #meters_lat_slice: 1000
