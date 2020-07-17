@@ -9,3 +9,7 @@ docker run --name inference --memory="8g" --memory-swap="16g" -v /tmp:/tmp -v /w
 
 docker logs inference
 docker exec -ti inference bash
+
+
+#### test.png
+34.95968170768319+-65.96097974743151+2020-07-04T01:00:00.png
