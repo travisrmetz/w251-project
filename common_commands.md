@@ -1,6 +1,8 @@
 
 ### big vm on AWS
 ssh -L localhost:8888:localhost:8888 -i /Users/travismetz/Dropbox/DesktopFolder/aws/trm-private-key.pem ubuntu@ec2-3-12-77-52.us-east-2.compute.amazonaws.com
+source activate tensorflow2_latest_p37
+
 
 ssh -i /Users/travismetz/Dropbox/DesktopFolder/aws/trm-private-key.pem ubuntu@ec2-3-12-77-52.us-east-2.compute.amazonaws.com
 
@@ -11,6 +13,9 @@ source activate tensorflow2_latest_p37 (on big vm)
 git branch -a
 git checkout [branch]
 aws configure 
+#### need to remove these at some point
+aws_access_key_id = AKIAUSYVLYV4WB4JQ2LH
+aws_secret_access_key = 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
 
 #### memory and disk
 free -h
