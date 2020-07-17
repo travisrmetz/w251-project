@@ -6,6 +6,12 @@ source activate tensorflow2_latest_p37
 
 ssh -i /Users/travismetz/Dropbox/DesktopFolder/aws/trm-private-key.pem ubuntu@ec2-3-12-77-52.us-east-2.compute.amazonaws.com
 
+config = tf.ConfigProto()
+config.gpu_options.allow_growth = True
+
+session = tf.Session(config=config, ...)
+
+
 #### commands to get vm ready
 git clone https://github.com/travisrmetz/w251-project.git
 sudo apt install nmon
