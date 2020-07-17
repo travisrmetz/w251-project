@@ -1,4 +1,4 @@
-#from geopy.distance import geodesic
+from geopy.distance import geodesic
 
 
 def get_file_name(lat,long,date):
