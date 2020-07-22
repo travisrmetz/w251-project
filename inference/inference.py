@@ -92,16 +92,16 @@ model=load_model_from_s3()
 #get file and do preprocessing and show it
 #take in argument
 print('Loading image')
-image_array=load_image('/inference/test.png',(480,270))
+image_array=load_image('/inference/test.png')
 print('Loaded image with shape:',image_array.shape)
 X_test=np.expand_dims(image_array,axis=3)
 X_test=np.expand_dims(X_test,axis=0)
 print('Shape of X_test',X_test.shape)
 
 #do prediction
-#print(model.summary())
 print('Ready to do prediction')
 y_hat = model.predict(X_test)
+
 
 #output results
 y_hat_lat=y_hat[0]
@@ -121,3 +121,6 @@ loss_nm=geodesic(point1,point2).nautical
 print('Estimated latitude, longitude:',y_hat_lat[0],',',y_hat_long[0])
 print('Actual latitude, longitude:',actual_lat,',',actual_long)
 print('Error in nautical miles:',loss_nm)
+
+#this does not work due to bug in tf 2.0 -- need to find way to upgrade to tf 2.1 or above
+#print(model.summary())

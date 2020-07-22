@@ -10,6 +10,11 @@ docker run --name inference --memory="8g" --memory-swap="16g" -v /tmp:/tmp -v /w
 docker logs inference
 docker exec -ti inference bash
 
+#### inside of container
+bash inference.sh
+
+make sure jetson_clocks is running - unclear if runs properly from container - can tell if fan is going
+
 
 #### test.png
 34.95968170768319+-65.96097974743151+2020-07-04T01:00:00.png
