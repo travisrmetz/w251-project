@@ -4,7 +4,9 @@
 
 ##  <a id="Contents">Contents
 [1.0 Introduction](#Introduction)
+
 [2.0 System Overview](#System_Overview)
+
 [3.0 The Model](#Model)
 
 
@@ -31,10 +33,13 @@ We want to explore the possibility of applying deep learning to the task of auto
 
 *[Return to contents](#Contents)*
 
+
 ## <a id="System_Overview">2.0 System Overview
+
 
 ### 2.1 Use Case
 We envision mariners using our system as a back-up to other forms of navigation, primarily for open-ocean navigation outside of five nautical miles from chartered hazards.  A navigator would depart on their voyage with a set of models suited for the vessel's track much in the same way as a navigator today loads relevant charts either from removable storage or the internet prior to departing on a voyage.  The system takes nothing more than the image returned from the edge device's installed camera and time from an accurate clock as input.  It returns both raw position output and an industry standard NMEA output suitable for integration with an electronic charting package.  A navigator with internet access at sea can load additional models from the cloud as needed to account for adjustments to the planned voyage.
+
 
 ### 2.2 Assumptions
 We made a number of engineering assumptions to make the problem tractable as a term project.
@@ -42,33 +47,12 @@ We made a number of engineering assumptions to make the problem tractable as a t
 - We are simulating images that would be taken at sea with synthetic images.  We hope eventually to conduct an operational test of the system.  We assume, then, that the installed camera on the operational system can replicate the resolution and overall quality of our synthetic images.
 - We assume the notional vessel on which the system would be installed is fitted with a three-axis gyrocompass to allow images to be captured at a fixed azimuth and elevation.  The requirements of the stabilization system can be inferred by perturbing the synthetic images to simulate stabilization error.
 
+
 ### 2.3 Components
 Our system consists of a cloud component and an edge component.  An image generator creates batches of synthetic images, names them using a descriptive scheme that allows easy indexing by location and time, and stores the models in object storage buckets indexed by location and time.  The model trainer pulls from these buckets to create models specific to a bounded geographic area at a given with certain time bounds.  These models are stored in object storage.  The edge device -- in this case a Jetson TX2 -- captures an image of the sky and the time at which the image was taken.  The inference engine performs a forward pass of the model, returning the vessel's predicted location both as raw output and as a NMEA string.
 
-```mermaid
-graph TB
-subgraph Cloud
-A[Image Generator] --> B(Image Storage - S3)
-A --By location/time--> C(Image Storage - S3)
-A --> D(Image Storage - S3)
-C -- Pull as needed --> F[Model Trainer]
-D --> F
-B --> F
-F --> G(Model Zoo)
-end
-subgraph Model Training
-subgraph Edge
-H[Image Capture]--> I[Inference Engine]
-I --> J[Raw Output]
-end
-G --> I
-J -- NMEA String --> K[Navigation Package]
-```
-
-
-
-
 *[Return to contents](#Contents)*
+
 
 ## <a id="Model">3.0 The Model
 Our model is a relatively simple CNN tuned to provide reasonably accurate predictions over a given waterspace and 
@@ -85,15 +69,19 @@ We naturally want our loss function to minimize the navigational error returned 
 
 Minimizing the haversine loss minimizes the error between predicted and actual locations, and the negative gradient of the haversine loss gives the direction of steepest descent in terms of the predicted latitude and longitude.
 
+
 ### 3.3 Generating Images
 We relied on synthetic images generated from the open source astronomy program _Stellarium_.  Stellarium can generated high-quality images of the sky for arbitrary geographic positions, times, azimuths (the heading of the virtual camera in true degrees), altitudes (the angular elevation of the virtual camera), camera field of view, and observer elevations.  Stellarium uses a JavaScript-based scripting language system to automate sequences of observations.  We wrote Python code to automate script generation based on a YAML input file.
 
 *[Return to contents](#Contents)*
 
+
 ## 4.0 Experimental Results
+
 
 ### 4.1 Test Area
 We bounded the test area both spatially and temporally in order to keep the problem tractable.  our test area exists from TODO
+
 
 ## References
 
