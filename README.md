@@ -1,5 +1,6 @@
 # Toward Automated Celestial Navigation with Deep Learning
 **UC Berkeley MIDS W251**
+
 **Travis Metz and Greg Tozzi**
 
 ##  <a id="Contents">Contents
