@@ -52,6 +52,8 @@ We made a number of engineering assumptions to make the problem tractable as a t
 ### 2.3 Components
 Our system consists of a cloud component and an edge component.  An image generator creates batches of synthetic images, names them using a descriptive scheme that allows easy indexing by location and time, and stores the models in object storage buckets indexed by location and time.  The model trainer pulls from these buckets to create models specific to a bounded geographic area at a given with certain time bounds.  These models are stored in object storage.  The edge device -- in this case a Jetson TX2 -- captures an image of the sky and the time at which the image was taken.  The inference engine performs a forward pass of the model, returning the vessel's predicted location both as raw output and as a NMEA string.
 
+![System diagram](https://github.com/travisrmetz/w251-project/blob/master/report_images/system_diagram.png)
+
 *[Return to contents](#Contents)*
 
 
