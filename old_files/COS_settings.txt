@@ -1,4 +1,0 @@
-{"COS_ENDPOINT" :"s3.us-east.cloud-object-storage.appdomain.cloud",
-"COS_API_KEY_ID" :"-WiYq3REqSK3r_rVtIBbnfgeo9xhDYicdDd68Rf9IIff",
-"COS_AUTH_ENDPOINT":"https://iam.bluemix.net/oidc/token", 
-"COS_RESOURCE_CRN" :"crn:v1:bluemix:public:iam-identity::a/9e91cf7266454e46a288688a24b9773f::serviceid:ServiceId-0ec90648-9372-4745-ae07-1cb5b0a28b7c"}
