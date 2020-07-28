@@ -10,6 +10,7 @@ RUN pip3 install boto3
 ADD credentials /root/.aws/credentials
 ADD config /root/.aws/config
 RUN pip3 install geopy
+RUN pip3 install --upgrade tensorflow-gpu
 
 
 #RUN pip3 install scipy==1.1.0
@@ -18,4 +19,4 @@ RUN pip3 install geopy
 #RUN apt-get install -y python3-numpy python3-matplotlib python3-pandas python3-nose python3-sympy 
 #RUN apt-get install python3-scipy
 
-WORKDIR /inference
+WORKDIR /inferenceq
