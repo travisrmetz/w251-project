@@ -1,5 +1,6 @@
 ### commands for inference container
 #### build proper docker container with cv2 etc
+Have to have credentials and config file for AWS in folder where Dockerfile is.  Copies to container root.
 docker build -t inference-image -f Dockerfile.inference .
 
 #### start tf2 keras container on jetson

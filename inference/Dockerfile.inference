@@ -8,6 +8,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN pip3 install numpy==1.17
 RUN pip3 install boto3
 ADD credentials /root/.aws/credentials
+#ADD credentials /home/trmetz/.aws/credentials
 ADD config /root/.aws/config
 RUN pip3 install geopy
 RUN pip3 install --upgrade tensorflow-gpu
@@ -19,4 +20,4 @@ RUN pip3 install --upgrade tensorflow-gpu
 #RUN apt-get install -y python3-numpy python3-matplotlib python3-pandas python3-nose python3-sympy 
 #RUN apt-get install python3-scipy
 
-WORKDIR /inferenceq
+WORKDIR /inference
