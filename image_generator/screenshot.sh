@@ -1,9 +1,5 @@
 #!/bin/sh
 
-# Mount the S3 bucket
-mkdir /root/images
-s3fs rza-cos-standard-l5d /root/images -o url=https://s3.us-east.cloud-object-storage.appdomain.cloud -o passwd_file=credentials_file
-
 # Generate the .ssc file
 python3 get_skies.py
 
