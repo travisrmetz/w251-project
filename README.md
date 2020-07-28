@@ -10,6 +10,8 @@
 
 [3.0 The Model](#Model)
 
+[4.0 Generating Synthetic Images](#Imgen)
+
 
 
 ## <a id="Introduction">1.0 Introduction
@@ -66,17 +68,53 @@ Our goal was to explore architectures that could learn a vessel's position from 
 
 Our network has two inputs.  The image input ingests pictures of the sky  the time input ingests the UTC time at which the image was taken.  The images are run through a series of convolutional and max pooling layers.  The results are concatenated with the normalized time and the resulting vector is put through dropout regularization, a dense hidden layer, and the regression head.  The head consists of two neurons, one each for normalized latitude and normalized longitude.  Latitude and longitude are normalized over the test area with the latitude of the southernmost bound mapping to 0 and the latitude of the northernmost bound mapping to 1.  Longitude is mapped similarly.  The output layer uses sigmoid activation to bound the output in the spatial domain of `([0,1], [0,1])`.
 
-
 ### 3.2 Introducing the Haversine Loss Function
 We naturally want our loss function to minimize the navigational error returned by the model.  We initially used mean squared error across latitude and longitude as our loss function, but we found that convergence was slow and that the model frequently failed to converge to reasonable values.  There is, of course a nonlinear relationship between latitude and longitude.  Whereas a degree of latitude is consistently 60 nautical miles anywhere on the globe, lines of longitude converge at the poles.  Using mean squared error, then, results in inconsistent results in terms of the model's error in distance.  To correct this, we implemented a new loss function in TensorFlow based on the haversine formula which gives the great circle distance between two points defined by latitude and longitude [[8]](#8). 
 
 Minimizing the haversine loss minimizes the error between predicted and actual locations, and the negative gradient of the haversine loss gives the direction of steepest descent in terms of the predicted latitude and longitude.
 
+*[Return to contents](#Contents)*
 
-### 3.3 Generating Images
-We relied on synthetic images generated from the open source astronomy program _Stellarium_.  Stellarium can generated high-quality images of the sky for arbitrary geographic positions, times, azimuths (the heading of the virtual camera in true degrees), altitudes (the angular elevation of the virtual camera), camera field of view, and observer elevations.  Stellarium uses a JavaScript-based scripting language system to automate sequences of observations.  We wrote Python code to automate script generation based on a YAML input file.
+## <a id="Imgen">4.0 Generating Synthetic Images
+Naturally, we must rely on synthetic images to train the model.  We adapted the open source astronomy program _Stellarium_ for use in the cloud as an image generator.  In this section we will detail our method for adpating Stellarium and will provide details for running the image generator in the cloud with images being stored in an S3 bucket.
+ 
+ ### 4.1 Stellarium Overview
+[Stellarium](https://stellarium.org) generates high-quality images of the sky for arbitrary geographic positions, times, azimuths (the heading of the virtual camera in true degrees), altitudes (the angular elevation of the virtual camera), camera field of view, and observer elevations [[10]](#10).  Stellarium's functionality is aimed at practitioners and hobbiests, it has been in continual development since 2006.  In addition to rendering celestial bodies, Stellarium can render satellites, meteor showers, and other astronomical events.  The program uses a JavaScript-based scripting language system to automate sequences of observations.
+
+### 4.2 Containerizing Stellarium
+Stellarium is designed for desktop operation.  Our Docker contianer allows the program to be run on a headless server in the cloud.  The basic container operation is outlined in the figure below.  A python script reads input from a YAML file and generates and outputs an SSC script that automates image generation.  Stellarium runs using a customized configuration file that prevents certain modules from running.  Stellarium executes the SSC script.  The image files are saved to an S3 mountpoint that the container accesses on the host system.
+
+[![](https://mermaid.ink/img/eyJjb2RlIjoiZ3JhcGggVERcblx0QVtZQU1MIEZpbGVdIC0tZnJvbSBob3N0LS0-IEJbU1NDIEdlbmVyYXRvciAtIFB5dGhvbl1cblx0QiAtLT4gQ1tTdGVsbGFyaXVtXVxuXHRDIC0tPiBEW1h2ZkJdXG5cdEQgLS1zY3JlZW4gY2FwdHVyZS0tPiBDXG5cdEMgLS10byBob3N0J3MgbW91bnRwb2ludC0tPkVbUzMgQnVja2V0XVxuICBcblx0XHRcdFx0XHQiLCJtZXJtYWlkIjp7InRoZW1lIjoibmV1dHJhbCJ9LCJ1cGRhdGVFZGl0b3IiOmZhbHNlfQ)](https://mermaid-js.github.io/mermaid-live-editor/#/edit/eyJjb2RlIjoiZ3JhcGggVERcblx0QVtZQU1MIEZpbGVdIC0tZnJvbSBob3N0LS0-IEJbU1NDIEdlbmVyYXRvciAtIFB5dGhvbl1cblx0QiAtLT4gQ1tTdGVsbGFyaXVtXVxuXHRDIC0tPiBEW1h2ZkJdXG5cdEQgLS1zY3JlZW4gY2FwdHVyZS0tPiBDXG5cdEMgLS10byBob3N0J3MgbW91bnRwb2ludC0tPkVbUzMgQnVja2V0XVxuICBcblx0XHRcdFx0XHQiLCJtZXJtYWlkIjp7InRoZW1lIjoibmV1dHJhbCJ9LCJ1cGRhdGVFZGl0b3IiOmZhbHNlfQ)
+
+### 4.3 Installing the Image Generator
+>The image generator must be run on a server with a GPU.  We assume that the virtual server is running Ubuntu 18.04 and is already provisioned with Docker and s3fs.
+
+- After pulling the repository on the virtual server, create a credentials file with `vi credentials` to allow access to object storage.  The credentials file should contain a single line with `<api_key>:<secret>`.
+
+- Next edit the `prepare_vs.sh` script such that it contains the user's object store information, and run script to build the image generator Docker image and link the mountpoint to the appropriate S3 bucket.
+
+```
+chmod +x prepare_vs.sh
+./prepare_vs.sh
+```
+
+- Verify that the `imgen` image is built by calling `docker images`.
+
+- Edit the `ssc_gen.yml` file to configure the maximum and minimum latitudes, longitudes, and times that will be rendered.
+
+- Create an `imgen` container instance with access to the host's mountpoint. `docker run --name <name> -dit -v /get_skies:/get_skies imgen`
+
+- Copy the YAML file to the container.  `docker cp ssc_gen.yml <name>:/`
+
+- Run the image generator and monitor progress.  `docker exec <name> ./screenshot.sh`
+
+The steps above can be automated further as needed.  Multiple instances of the image generator container can be run on the same server to speed the process.
+
+
+We wrote Python code to automate script generation based on a YAML input file.
 
 *[Return to contents](#Contents)*
+
 
 
 ## 4.0 Experimental Results
@@ -94,17 +132,19 @@ We bounded the test area both spatially and temporally in order to keep the prob
 
 <a id="3">[3]</a> G. Beutler, W. Gurtner, M. Rothacher, U. Wild and E. Frei, "Relative Static Positioning with the Global Positioning System:  Basic Technical Considerations," in _Global Positioning System:  An Overview_., International Association of Geodesy Symposia 102, ch. 1, 1990.
 
- <a id="4">[4]</a> E. G. Blackwell, "Overview of Differential GPS Methods" in _Navigation_, 32: 114-125, 1985. doi:[10.1002/j.2161-4296.1985.tb00895.x](https://doi.org/10.1002/j.2161-4296.1985.tb00895.x)
+<a id="4">[4]</a> E. G. Blackwell, "Overview of Differential GPS Methods" in _Navigation_, 32: 114-125, 1985. doi:[10.1002/j.2161-4296.1985.tb00895.x](https://doi.org/10.1002/j.2161-4296.1985.tb00895.x)
 
- <a id="5">[5]</a> U. S. Coast Guard Navigation Center, "Special Notice Regarding LORAN Closure", [https://www.navcen.uscg.gov/?pageName=loranMain](https://www.navcen.uscg.gov/?pageName=loranMain).
+<a id="5">[5]</a> U. S. Coast Guard Navigation Center, "Special Notice Regarding LORAN Closure", [https://www.navcen.uscg.gov/?pageName=loranMain](https://www.navcen.uscg.gov/?pageName=loranMain).
 
- <a id="6">[6]</a> T. Hitchens, "SASC Wants Alternative GPS By 2023," 29 June 2020, [breakingdefense.com/2020/06/sasc-wants-alternative-gps-by-2023/](breakingdefense.com/2020/06/sasc-wants-alternative-gps-by-2023/.).
+<a id="6">[6]</a> T. Hitchens, "SASC Wants Alternative GPS By 2023," 29 June 2020, [breakingdefense.com/2020/06/sasc-wants-alternative-gps-by-2023/](breakingdefense.com/2020/06/sasc-wants-alternative-gps-by-2023/.).
 
- <a id="7">[7]</a> M. Garvin, "Future of Celestial Navigation and the Ocean-Going Military Navigator," [OTS Master's Level Projects & Papers. 41](https://digitalcommons.odu.edu/ots_masters_projects/41), 2010.
+<a id="7">[7]</a> M. Garvin, "Future of Celestial Navigation and the Ocean-Going Military Navigator," [OTS Master's Level Projects & Papers. 41](https://digitalcommons.odu.edu/ots_masters_projects/41), 2010.
 
- <a id="8">[8]</a> C. N. Alam, K. Manaf, A. R. Atmadja and D. K. Aurum, "Implementation of haversine formula for counting event visitor in the radius based on Android application," _2016 4th International Conference on Cyber and IT Service Management_, Bandung, 2016, pp. 1-6, doi: [10.1109/CITSM.2016.7577575]([https://ieeexplore.ieee.org/abstract/document/7577575](https://ieeexplore.ieee.org/abstract/document/7577575)).
+<a id="8">[8]</a> C. N. Alam, K. Manaf, A. R. Atmadja and D. K. Aurum, "Implementation of haversine formula for counting event visitor in the radius based on Android application," _2016 4th International Conference on Cyber and IT Service Management_, Bandung, 2016, pp. 1-6, doi: [10.1109/CITSM.2016.7577575]([https://ieeexplore.ieee.org/abstract/document/7577575](https://ieeexplore.ieee.org/abstract/document/7577575)).
 
- <a id="9">[9]</a> "NMEA 0183 INSTALLATION AND OPERATING GUIDELINES," retrieved from [https://www.navcen.uscg.gov/pdf/gmdss/taskforce/nmea_7.pdf](https://www.navcen.uscg.gov/pdf/gmdss/taskforce/nmea_7.pdf)
+<a id="9">[9]</a> "NMEA 0183 INSTALLATION AND OPERATING GUIDELINES," retrieved from [https://www.navcen.uscg.gov/pdf/gmdss/taskforce/nmea_7.pdf](https://www.navcen.uscg.gov/pdf/gmdss/taskforce/nmea_7.pdf)
+ 
+<a id="10">[10]</a>M. Gates, G. Zotti and A. Wolf, _Stellarium User Guide_, 2016. doi:[10.13140/RG.2.2.32203.59688](https://www.researchgate.net/publication/306257191_Stellarium_User_Guide)
 
 *[Return to contents](#Contents)*
 
