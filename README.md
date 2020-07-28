@@ -87,7 +87,30 @@ Stellarium is designed for desktop operation.  Our Docker contianer allows the p
 [![](https://mermaid.ink/img/eyJjb2RlIjoiZ3JhcGggVERcblx0QVtZQU1MIEZpbGVdIC0tZnJvbSBob3N0LS0-IEJbU1NDIEdlbmVyYXRvciAtIFB5dGhvbl1cblx0QiAtLT4gQ1tTdGVsbGFyaXVtXVxuXHRDIC0tPiBEW1h2ZkJdXG5cdEQgLS1zY3JlZW4gY2FwdHVyZS0tPiBDXG5cdEMgLS10byBob3N0J3MgbW91bnRwb2ludC0tPkVbUzMgQnVja2V0XVxuICBcblx0XHRcdFx0XHQiLCJtZXJtYWlkIjp7InRoZW1lIjoibmV1dHJhbCJ9LCJ1cGRhdGVFZGl0b3IiOmZhbHNlfQ)](https://mermaid-js.github.io/mermaid-live-editor/#/edit/eyJjb2RlIjoiZ3JhcGggVERcblx0QVtZQU1MIEZpbGVdIC0tZnJvbSBob3N0LS0-IEJbU1NDIEdlbmVyYXRvciAtIFB5dGhvbl1cblx0QiAtLT4gQ1tTdGVsbGFyaXVtXVxuXHRDIC0tPiBEW1h2ZkJdXG5cdEQgLS1zY3JlZW4gY2FwdHVyZS0tPiBDXG5cdEMgLS10byBob3N0J3MgbW91bnRwb2ludC0tPkVbUzMgQnVja2V0XVxuICBcblx0XHRcdFx0XHQiLCJtZXJtYWlkIjp7InRoZW1lIjoibmV1dHJhbCJ9LCJ1cGRhdGVFZGl0b3IiOmZhbHNlfQ)
 
 ### 4.3 Installing the Image Generator
->The image generator must be run on a server with a GPU.  We assume that the virtual server is running Ubuntu 18.04 and is already provisioned with Docker and s3fs.
+
+#### 4.3.1 File Contents
+The `image_generator` director contains the following files:
+
+`prepare_vs.sh` prepares the cloud server to save image files to an object store and builds the Dockerfile.
+
+`image_generator.dockerfile` builds the `imgen` image.
+
+`get_skies.py` reads a YAML input file and generates an SSC that Stellarium executes.  The SSC is build from random locations sampled from the spatial-temporal grid defined in the YAML file.
+
+`get_skies_grid.py` is deprecated but is kept for reference.  This file contains code to generate images based on a strict grid.
+
+`get_skies_helper.py` contains functions used by `get_skies.py`.
+
+`screenshot.sh` runs the image generation routine from the docker container.
+
+`default_cfg.ini` is a replacement for Stellarium's configuration file.  This turns off several modules that slow the image generation process.
+
+*[Return to contents](#Contents)*
+
+#### 4.3.2 Installing and Running the Image Generator
+>Note:  The image generator must be run on a server with a GPU.  We assume that the virtual server is running Ubuntu 18.04 and is already provisioned with Docker and s3fs.
+
+>Note:  The output of the image generator need not be placed in an object store.  The steps below can be adapted to direct the images to local storage.
 
 - After pulling the repository on the virtual server, create a credentials file with `vi credentials` to allow access to object storage.  The credentials file should contain a single line with `<api_key>:<secret>`.
 
@@ -110,11 +133,7 @@ chmod +x prepare_vs.sh
 
 The steps above can be automated further as needed.  Multiple instances of the image generator container can be run on the same server to speed the process.
 
-
-We wrote Python code to automate script generation based on a YAML input file.
-
 *[Return to contents](#Contents)*
-
 
 
 ## 4.0 Experimental Results
