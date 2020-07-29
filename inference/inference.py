@@ -1,19 +1,19 @@
 import numpy as np
-#import tensorflow as tf
+import tensorflow as tf
 import pandas as pd
 import matplotlib.pyplot as plt
 import cv2
 import os
 import boto3
 import io
-#import haversine as hs
+import haversine as hs
 from geopy.distance import geodesic
 import random as random
 from inference_functions import load_image,get_labels,normalize_times
 import yaml
 
-#gpus = tf.config.experimental.list_physical_devices('GPU')
-#tf.config.experimental.set_memory_growth(gpus[0], True)
+gpus = tf.config.experimental.list_physical_devices('GPU')
+tf.config.experimental.set_memory_growth(gpus[0], True)
 
 def load_model_from_s3():
     bucket_name='w251-final-project-model'  
@@ -96,9 +96,9 @@ def main():
     #model=load_model_from_s3()
 
     #get model from local directory
-    #local_model_dir="/tmp/inference_model"
-    #model=tf.keras.models.load_model(local_model_dir)
-    #print (model.summary())
+    local_model_dir="/tmp/inference_model/small_model"
+    model=tf.keras.models.load_model(local_model_dir)
+    print (model.summary())
 
 
     #get file and do preprocessing and show it
