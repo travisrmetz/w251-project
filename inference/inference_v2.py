@@ -12,6 +12,7 @@ import random as random
 from inference_functions import load_image,get_labels,normalize_times, scale_up, scale_down
 import yaml
 import paho.mqtt.client as mqtt
+from datetime import datetime 
 
 gpus = tf.config.experimental.list_physical_devices('GPU')
 tf.config.experimental.set_memory_growth(gpus[0], True)
@@ -69,64 +70,75 @@ def main():
         #print (model.summary())
 
 
-    def inference(image_dir,file_name):
-        #load image
-        print('Loading image')
-        image_array=load_image(os.path.join(image_dir,file_name))
-        print('Loaded image with shape:',image_array.shape)
-        plt.imshow(image_array)
-
-
-        #get labels to test image
-        y_lat,y_long,time=get_labels(file_name)
-        print('Test image lat,long,time:', y_lat,y_long,time)
-
-        #process proper image dimensions
-        X_test=np.expand_dims(image_array,axis=3)
-        X_test=np.expand_dims(X_test,axis=0)
-        print('Shape of X_test',X_test.shape)
-
-        #process time into TF input
-        #converted to some sort of DT?
-        T_test=normalize_times(time,dtstart,dtend)
-        print ('T_test',T_test)
-
-        #do prediction
-        print('Ready to do prediction')
-        y_hat = model.predict([X_test,T_test])
-
-
-        #output results
-        y_hat_lat=y_hat[0]
-        y_hat_long=y_hat[1]
-            
-        y_hat_lat=scale_up(y_hat_lat,latend,latstart)
-        y_hat_long=scale_up(y_hat_long,longend,longstart)
-
-        point1=(y_hat_lat[0],y_hat_long[0])
-        point2=(y_lat,y_long)
-        
-        loss_nm=geodesic(point1,point2).nautical
-
-        print('Estimated latitude, longitude:',y_hat_lat[0],',',y_hat_long[0])
-        print('Actual latitude, longitude:',y_lat,',',y__long)
-        print('Error in nautical miles:',loss_nm)
+    
 
     def on_message(client,userdata, msg):
+        def inference(image_array,file_name):
+            #load image
+            #print('Loading image')
+            #image_array=load_image(os.path.join(image_dir,file_name))
+            print('Within inference have image with shape:',image_array.shape)
+            plt.imshow(image_array)
+
+
+            #get labels to test image
+            y_lat,y_long,time=get_labels(file_name)
+            print('Test image lat,long,time:', y_lat,y_long,time)
+
+            #process proper image dimensions
+            X_test=np.expand_dims(image_array,axis=3)
+            X_test=np.expand_dims(X_test,axis=0)
+            print('Shape of X_test',X_test.shape)
+
+            #process time into TF input
+            #converted to some sort of DT?
+            T_test=normalize_times(time,dtstart,dtend)
+            print ('T_test',T_test)
+
+            #do prediction
+            print('Ready to do prediction')
+            y_hat = model.predict([X_test,T_test])
+
+
+            #output results
+            y_hat_lat=y_hat[0]
+            y_hat_long=y_hat[1]
+                
+            y_hat_lat=scale_up(y_hat_lat,latend,latstart)
+            y_hat_long=scale_up(y_hat_long,longend,longstart)
+
+            point1=(y_hat_lat[0],y_hat_long[0])
+            point2=(y_lat,y_long)
+            
+            loss_nm=geodesic(point1,point2).nautical
+
+            print('Estimated latitude, longitude:',y_hat_lat[0],',',y_hat_long[0])
+            print('Actual latitude, longitude:',y_lat,',',y__long)
+            print('Error in nautical miles:',loss_nm)
+        
         try:
-            print("Celestial image received!")
+            
+            
+            print("Celestial image received!",datetime.now())
+                
+            #use numpy to construct an array from the bytes
+            image_array = np.fromstring(msg.payload, dtype='uint8')
+            print('Have image array:',image_array.shape)
+            print('Beginning reshaping')
+            reshaped_image=image_array.reshape(1080,1920,3)
+            print('Ending reshaping:',reshaped_image.shape)
+            
 
-            image_array = np.fromstring(msg.payload, np.uint8)
-            print('image turned into array')
-            image = cv2.imdecode(image_array,cv2.IMREAD_GRAYSCALE)
-            print ('image encoded by cv2')
-            image_dir='/tmp'
-            file_name='39.93706479334325+-77.09413134351726+2020-05-25T22:56:03.png' #need to figure out how to send the filename across
-            file_path=os.path.join(image_dir,file_name)
-            cv2.imwrite(file_name, image)
-            print('file written',file_path)
-
-            inference(image_dir,file_name)
+            #show it
+            imS = cv2.resize(reshaped_image, (960, 540)) 
+            cv2.imshow("Sky at inference", imS)
+            cv2.waitKey()
+    
+            
+        
+            file_name='39.93706479334325+-77.09413134351726+2020-05-25T22:56:03.png'
+            print('going to inference')
+            inference(reshaped_image,file_name)
 
         except:
             print("Unexpected error:", sys.exc_info()[0])
@@ -149,6 +161,8 @@ def main():
     local_mqttclient.on_connect = on_connect_local
     local_mqttclient.connect(LOCAL_MQTT_HOST, LOCAL_MQTT_PORT, 3600)
     local_mqttclient.on_message = on_message
+    
+    
     local_mqttclient.loop_forever()
 
 
