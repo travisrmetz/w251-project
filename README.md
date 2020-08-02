@@ -162,6 +162,49 @@ The container saves models in the `.h5` format to a user-specified directory tha
 ### 4.1 Test Area
 We bounded the test area both spatially and temporally in order to keep the problem tractable.  our test area exists from TODO
 
+## An End-to-End Example
+
+This section walks through a detailed example of generating synthetic data, training a model in the cloud, pushing that model to an object store, pulling the model to the edge device, capturing an image locally, and making an inference based on that image.
+
+### Generate images
+We begin by provisioning a virtual server on a cloud provider.  Rather to storing to object storage, we will store the images locally to train the model on the same virtual server.  We create a local directory to hold the images.  We then clone the repo and `cd` into the `image_generator` directory.
+
+```
+git clone https://github.com/travisrmetz/w251-project.git
+mkdir /data/image_train_val
+mkdir /data/image_test
+cd w251-project/image_generator
+```
+
+Build the docker image.
+
+```
+docker build -t imgen -f image_generator.dockerfile .
+```
+
+For this case, we will use the `ssc_gen.yml` file as it appears in the repository.  We want to build a total of 20,000 images.  To speed the process we will use 10 workers.
+
+```
+for i in 0 1 2 3 4 5 6 7 8 9
+do docker run --name imgen$i -dit -v /data/image_train_val:/data/image_train_val imgen
+docker cp ssc_gen.yml imgen$i:/
+docker exec -d imgen$i ./screenshot.sh
+done
+```
+
+Get rid of the now-unneeded workers.
+
+```
+for i in 0 1 2 3 4 5 6 7 8 9
+do docker stop imgen$i
+docker rm imgen$i
+done
+```
+
+Edit the `ssc_gen.yml` file to change the target directory to `/data/image_test` and build 1,000 test images.
+
+
+
 
 ## References
 
