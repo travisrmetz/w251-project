@@ -1,3 +1,4 @@
+
 # Toward Automated Celestial Navigation with Deep Learning
 **UC Berkeley MIDS W251**
 
@@ -11,6 +12,8 @@
 [3.0 The Model](#Model)
 
 [4.0 Generating Synthetic Images](#Imgen)
+
+[5.0 Training the Model](#Train)
 
 
 
@@ -69,7 +72,7 @@ Our goal was to explore architectures that could learn a vessel's position from 
 Our network has two inputs.  The image input ingests pictures of the sky  the time input ingests the UTC time at which the image was taken.  The images are run through a series of convolutional and max pooling layers.  The results are concatenated with the normalized time and the resulting vector is put through dropout regularization, a dense hidden layer, and the regression head.  The head consists of two neurons, one each for normalized latitude and normalized longitude.  Latitude and longitude are normalized over the test area with the latitude of the southernmost bound mapping to 0 and the latitude of the northernmost bound mapping to 1.  Longitude is mapped similarly.  The output layer uses sigmoid activation to bound the output in the spatial domain of `([0,1], [0,1])`.
 
 ### 3.2 Introducing the Haversine Loss Function
-We naturally want our loss function to minimize the navigational error returned by the model.  We initially used mean squared error across latitude and longitude as our loss function, but we found that convergence was slow and that the model frequently failed to converge to reasonable values.  There is, of course a nonlinear relationship between latitude and longitude.  Whereas a degree of latitude is consistently 60 nautical miles anywhere on the globe, lines of longitude converge at the poles.  Using mean squared error, then, results in inconsistent results in terms of the model's error in distance.  To correct this, we implemented a new loss function in TensorFlow based on the haversine formula which gives the great circle distance between two points defined by latitude and longitude [[8]](#8). 
+We want our loss function to minimize the navigational error returned by the model.  We initially used mean squared error across latitude and longitude as our loss function, but we found that convergence was slow and that the model frequently failed to converge to reasonable values.  There is, of course a nonlinear relationship between latitude and longitude.  Whereas a degree of latitude is consistently 60 nautical miles anywhere on the globe, lines of longitude converge at the poles and diverge at the equator.  Using mean squared error, then, results in inconsistent results in terms of the model's error in distance.  To correct this, we implemented a new loss function in TensorFlow based on the haversine formula which gives the great circle distance between two points defined by latitude and longitude [[8]](#8). 
 
 Minimizing the haversine loss minimizes the error between predicted and actual locations, and the negative gradient of the haversine loss gives the direction of steepest descent in terms of the predicted latitude and longitude.
 
@@ -88,8 +91,8 @@ Stellarium is designed for desktop operation.  Our Docker contianer allows the p
 
 ### 4.3 Installing the Image Generator
 
-#### 4.3.1 File Contents
-The `image_generator` director contains the following files:
+#### 4.3.1 Files
+The `image_generator` directory contains the following files:
 
 `prepare_vs.sh` prepares the cloud server to save image files to an object store and builds the Dockerfile.
 
@@ -97,13 +100,15 @@ The `image_generator` director contains the following files:
 
 `get_skies.py` reads a YAML input file and generates an SSC that Stellarium executes.  The SSC is build from random locations sampled from the spatial-temporal grid defined in the YAML file.
 
-`get_skies_grid.py` is deprecated but is kept for reference.  This file contains code to generate images based on a strict grid.
+`get_skies.sh` and `get_skies_grid.py` are deprecated but is kept for reference.  This files contains code to generate images based on a spatial-temporal grid.
 
 `get_skies_helper.py` contains functions used by `get_skies.py`.
 
 `screenshot.sh` runs the image generation routine from the docker container.
 
 `default_cfg.ini` is a replacement for Stellarium's configuration file.  This turns off several modules that slow the image generation process.
+
+`ssc_gen.yml` is a sample input file.
 
 *[Return to contents](#Contents)*
 
@@ -125,7 +130,7 @@ chmod +x prepare_vs.sh
 
 - Edit the `ssc_gen.yml` file to configure the maximum and minimum latitudes, longitudes, and times that will be rendered.
 
-- Create an `imgen` container instance with access to the host's mountpoint. `docker run --name <name> -dit -v /get_skies:/get_skies imgen`
+- Create an `imgen` container instance with access to the host's mountpoint. `docker run --name <name> -dit -v /<mountpoint>:/<mountpoint> imgen`
 
 - Copy the YAML file to the container.  `docker cp ssc_gen.yml <name>:/`
 
@@ -135,6 +140,21 @@ The steps above can be automated further as needed.  Multiple instances of the i
 
 *[Return to contents](#Contents)*
 
+## <a id="Train">5.0 Training the Model
+
+We built a Docker container to facilitate training in the cloud.  The container is built on the base TensorFlow container [[11]](#11) and facilitates deploying instances to allow simultaneous training of models representing different spatial-temporal regions.  Our model is written in TensorFlow and requires two inputs---one image and one floating point value identifying the time at which the image was generated.
+
+### 5.1 Preprocessing
+We convert images into Numpy arrays with dimensions `(None, 224, 224, 1)`  with a script that leans heavily on [OpenCV](https://opencv.org) [[12]](#12).  Images are read from a single  directory.  The images are reduced to the the target resolution and are stacked in a single Numpy array.  Time and true position are parsed from the input file names which follow the format `<lat>+<long>+<YYYY>-<MM>-<DD>T<hh>:<mm>:<ss>.png`.  Date time groups are converted to `numpy.datetime64` and are normalized on `[0,1]` based on the temporal bounds on the training set.  Latitudes and longitudes are normalized on `[0,1]` based on the maximum extent of the geographic area under consideration and formed into an array with dimensions `(None, 2)`.
+
+The data are broken into training and validation sets based on a user-provided split and random assignment.
+
+### 5.2 Training
+We use the [ktrain](https://towardsdatascience.com/ktrain-a-lightweight-wrapper-for-keras-to-help-train-neural-networks-82851ba889c) package to train the models [[13]](#13).  The `tensorflow.keras.model` object is wrapped in a `ktrain.learner` object to simplify training and access ktrain's built in callbacks.  We train using the `ktrain.learner.autofit` function with an initial maximum learning rate of 10e-4.  The training function applies the triangular learning rate policy with reduction in maximum learning rate when a plateau is encountered on the validation loss introduced by Smith [[14]](#14).
+
+The container saves models in the `.h5` format to a user-specified directory that maps to the host.  In this way, the model can be saved either locally or to object storage.
+
+*[Return to contents](#Contents)*
 
 ## 4.0 Experimental Results
 
@@ -163,7 +183,15 @@ We bounded the test area both spatially and temporally in order to keep the prob
 
 <a id="9">[9]</a> "NMEA 0183 INSTALLATION AND OPERATING GUIDELINES," retrieved from [https://www.navcen.uscg.gov/pdf/gmdss/taskforce/nmea_7.pdf](https://www.navcen.uscg.gov/pdf/gmdss/taskforce/nmea_7.pdf)
  
-<a id="10">[10]</a>M. Gates, G. Zotti and A. Wolf, _Stellarium User Guide_, 2016. doi:[10.13140/RG.2.2.32203.59688](https://www.researchgate.net/publication/306257191_Stellarium_User_Guide)
+<a id="10">[10]</a> M. Gates, G. Zotti and A. Wolf, _Stellarium User Guide_, 2016. doi:[10.13140/RG.2.2.32203.59688](https://www.researchgate.net/publication/306257191_Stellarium_User_Guide)
+
+<a id="11">[11]</a> “Docker | TensorFlow” _TensorFlow_, TensorFlow.org, 15 July 2020, https://www.tensorflow.org/install/docker.
+
+<a id="12">[12]</a> G. Bradski, G., "The OpenCV Library" _Dr. Dobb&#39;s Journal of Software Tools_, 2000.
+
+<a id="13">[13]</a> A. Maiya, "ktrain: A Low-Code Library for Augmented Machine Learning," [arXiv:2004.10703](https://arxiv.org/abs/2004.10703), 2020.
+
+<a id="14">[14]</a> L. Smith, "Cyclical Learning Rates for Training Neural Networks," [arXiv:1506.01186v6](https://arxiv.org/abs/1506.01186v6), 2017.
 
 *[Return to contents](#Contents)*
 
