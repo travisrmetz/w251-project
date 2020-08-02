@@ -9,11 +9,17 @@ import io
 import haversine as hs
 from geopy.distance import geodesic
 import random as random
-from inference_functions import load_image,get_labels,normalize_times
+from inference_functions import load_image,get_labels,normalize_times, scale_up, scale_down
 import yaml
+import paho.mqtt.client as mqtt
+from datetime import datetime 
+import traceback
+import argparse
+
 
 gpus = tf.config.experimental.list_physical_devices('GPU')
 tf.config.experimental.set_memory_growth(gpus[0], True)
+	
 
 def load_model_from_s3():
     bucket_name='w251-final-project-model'  
@@ -42,53 +48,24 @@ def load_model_from_s3():
     print('Loaded model from S3')
     return model
 
-# def load_image(image_path, dim=(224,224)):
-#     """
-#     Loads a single image as a Numpy array and resizes it as
-#     desired.  The default dimensions are consistent with
-#     those expected by the VGG models.  
 
-#     Args:
-#         file_name:  file to convert to image
-
-#     dim: Two-element tuple giving the desired height
-#          and width of the processed image
-
-#     Returns:
-#     image:  A single-channel Numpy array
-#     """
-#     image = cv2.imread(image_path, 0)
-#     image = cv2.resize(image, dim)
-#     image_array=np.array(image) / 255
-#     return image_array
-
-def scale_down(numbers):
-    top=max(numbers)
-    bottom=min(numbers)
-    middle=(top+bottom)/2
-    number_range=top-bottom
-    revised=[x-middle for x in numbers]
-    revised=[x/number_range*2 for x in revised]
-    return revised,top,bottom
-
-def scale_up(numbers,top,bottom):
-    middle=(top+bottom)/2
-    number_range=top-bottom
-    revised=[x*number_range/2 for x in numbers]
-    revised=[x+middle for x in revised]
-    return revised
-
-def main():
     
+def setup():
     #get configurationvalues
     with open('inference.yml') as config_file:
         config_data = yaml.load(config_file)
     image_dir = config_data['image_dir']
-    latstart = config_data['latstart']
+    global latstart 
+    latstart= config_data['latstart']
+    global latend
     latend=config_data['latend']
+    global longstart
     longstart = config_data['longstart']
+    global longend
     longend=config_data['longend']
-    dtstart = config_data['dtstart']
+    global dtstart 
+    dtstart= config_data['dtstart']
+    global dtend
     dtend=config_data['dtend']
     
     
@@ -96,41 +73,37 @@ def main():
     #model=load_model_from_s3()
 
     #get model from local directory
-    local_model_dir="/tmp/inference_model/small_model"
-    model=tf.keras.models.load_model(local_model_dir)
+    #local_model_dir="/inference/small_model"
+    local_model_path="/inference/model/one_night_model.h5"
+    print ('Loading model')
+    model=tf.keras.models.load_model(local_model_path,compile=False)
+    #print (model.summary())
+    print('Compiling model')
+    model.compile(loss=hs.haversine_loss)
     print (model.summary())
+    return (model)
 
-
-    #get file and do preprocessing and show it
-    #take in argument
-
-    #select in random image
-    path, dirs, files = next(os.walk(image_dir))
-    file_count = len(files)
-    random_file=files[random.randint(0,file_count)]
-    print('Random file selected:', random_file)
-
-
-    #load image
-    print('Loading image')
-    image_array=load_image(os.path.join(image_dir,random_file))
-    print('Loaded image with shape:',image_array.shape)
-    plt.imshow(image_array)
-
+def inference(image_array,file_name):
+    print('Within inference have image with shape:',image_array.shape)
+    #plt.imshow(image_array)
+    dim=(224,224)
+    image_array = cv2.resize(image_array, dim)
 
     #get labels to test image
-    y_lat,y_long,time=get_labels(random_file)
+    y_lat,y_long,time=get_labels(file_name)
     print('Test image lat,long,time:', y_lat,y_long,time)
-
-    #process proper image dimensions
-    X_test=np.expand_dims(image_array,axis=3)
-    X_test=np.expand_dims(X_test,axis=0)
-    print('Shape of X_test',X_test.shape)
-
+    
     #process time into TF input
     #converted to some sort of DT?
     T_test=normalize_times(time,dtstart,dtend)
     print ('T_test',T_test)
+    
+    #process proper image dimensions
+    X_test=np.expand_dims(image_array,axis=3)
+    #X_test=np.expand_dims(X_test,axis=0)
+    print('Shape of X_test',X_test.shape)
+
+   
 
     #do prediction
     print('Ready to do prediction')
@@ -153,10 +126,75 @@ def main():
     print('Actual latitude, longitude:',y_lat,',',y__long)
     print('Error in nautical miles:',loss_nm)
 
-    #this does not work due to bug in tf 2.0 -- need to find way to upgrade to tf 2.1 or above
-    #print(model.summary())
+def on_log(mqttc, obj, level, string):
+    print(string)
 
+def on_message(client,userdata, msg):
+        
+    try:
+        print("Celestial image received!",datetime.now())
+            
+        #use numpy to construct an array from the bytes
+        image_array = np.fromstring(msg.payload, dtype='uint8')
+        print('Have image array:',image_array.shape)
+        print('Beginning reshaping')
+        reshaped_image=image_array.reshape(1080,1920,3)
+        print('Ending reshaping:',reshaped_image.shape)
+        
+        #show it
+        #imS = cv2.resize(reshaped_image, (960, 540)) 
+        #cv2.imshow("Sky at inference", imS)
+        #cv2.waitKey()
+
+        
+        file_name='39.93706479334325+-77.09413134351726+2020-05-25T22:56:03.png'
+        print('going to inference')
+        inference(reshaped_image,file_name)
+        
+
+    except:
+        traceback.print_exc()
+        quit(0)
+
+def on_connect_local(client, userdata, flags, rc):
+    print("connected to local broker with rc: " + str(rc))
+    client.subscribe(LOCAL_MQTT_TOPIC)
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--model',type=boolean )
+    args = parser.parse_args()
+    print(args)
+    
+    #loads model and gets ready for income picture
+    print('Starting load model and setup')
+    model=setup()
+
+    #waits for incoming picture
+    LOCAL_MQTT_HOST="mosq-broker"
+    LOCAL_MQTT_PORT=1883
+    LOCAL_MQTT_TOPIC="celestial"
+
+    print('Connecting to broker and waiting for picture')
+    local_mqttclient = mqtt.Client()
+    local_mqttclient.on_connect = on_connect_local
+    local_mqttclient.connect(LOCAL_MQTT_HOST, LOCAL_MQTT_PORT, 3600)
+    local_mqttclient.on_log = on_log
+    local_mqttclient.on_message = on_message
+
+
+    local_mqttclient.loop_forever()
 
 
 if __name__ == "__main__":
     main()
+
+parser = argparse.ArgumentParser(description='Process some integers.')
+parser.add_argument('integers', metavar='N', type=int, nargs='+',
+                    help='an integer for the accumulator')
+parser.add_argument('--sum', dest='accumulate', action='store_const',
+                    const=sum, default=max,
+                    help='sum the integers (default: find the max)')
+
+args = parser.parse_args()
+print(args.accumulate(args.integers))
