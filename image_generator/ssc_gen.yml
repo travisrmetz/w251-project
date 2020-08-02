@@ -18,6 +18,6 @@ longend:   -78
 
 # Date and time settings
 dtstart: '2020-05-25T12:00:00'
-dtend:   '2020-05-26T11:59:59'
+dtend:   '2020-06-01T11:59:59'
 
-number_images: 20
+number_images: 50000
