@@ -4,6 +4,7 @@ import paho.mqtt.client as mqtt
 import yaml
 import os
 import random
+import time
 
 MQTT_HOST="mosq-broker"
 MQTT_PORT=1883
@@ -19,27 +20,37 @@ with open('/inference/inference.yml') as config_file:
 path, dirs, files = next(os.walk(image_dir))
 file_count = len(files)
 
-
 while (True):
-    random_file=files[random.randint(0,file_count)]
+    random_file=files[random.randint(0,file_count-1)]
     print('Random file selected:', random_file)
 
-    #file_name='39.93706479334325+-77.09413134351726+2020-05-25T22:56:03.png' #need to figure out how to send the filename across
-    file_path=os.path.join(image_dir,random_file)    
+    image_path=os.path.join(image_dir,random_file)    
 
-    img=cv2.imread(file_path)
-    imS = cv2.resize(img, (960, 540))                    # Resize image
-    cv2.imshow("sky", imS) 
-    k=cv2.waitKey()
+    #doing image work here to reduce size of file sent on MQTT
+    #read in image in black and white and convert size
+    image = cv2.imread(image_path, 0) #0=bw
+    dim=(224,224)
+    image = cv2.resize(image, dim)
     
-    if k==27:  ##hit esc key to break from program, otherwise keypress cycles to next image
-        break
-    print('Image array shape:',img.shape)
-    msg=bytearray(img)
-    print('Sending message to broker')
+    #sending filename first
+    msg=random_file
+    mqttclient.publish(MQTT_TOPIC, payload=msg, qos=1)
+    print('Sent filename to broker')
+
+    #now sending image
+    msg=bytearray(image)
     mqttclient.publish(MQTT_TOPIC, payload=msg, qos=1)
     print('Sent message to broker')
+
     
+    imS = cv2.resize(image, (960, 540))                    # Resize image
+    cv2.imshow("sky", imS) 
+    k=cv2.waitKey()
+
+    if k==27:  ##hit esc key to break from program, otherwise keypress cycles to next image
+        break
+    
+
 #need program to keep running to make sure it hits broker once
   
   

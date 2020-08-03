@@ -16,7 +16,7 @@ from datetime import datetime
 import traceback
 import argparse
 
-
+#intended for better memory management at GPU
 gpus = tf.config.experimental.list_physical_devices('GPU')
 tf.config.experimental.set_memory_growth(gpus[0], True)
 	
@@ -84,72 +84,62 @@ def setup():
     return (model)
 
 def inference(image_array,file_name):
-    print('Within inference have image with shape:',image_array.shape)
-    #plt.imshow(image_array)
-    dim=(224,224)
-    image_array = cv2.resize(image_array, dim)
-
+    #normalize values
+    image_array=image_array/255
+    
     #get labels to test image
     y_lat,y_long,time=get_labels(file_name)
-    print('Test image lat,long,time:', y_lat,y_long,time)
     
     #process time into TF input
-    #converted to some sort of DT?
     T_test=normalize_times(time,dtstart,dtend)
-    print ('T_test',T_test)
+    T_test=(T_test)
+    T_test=np.expand_dims(T_test,axis=0)
     
     #process proper image dimensions
     X_test=np.expand_dims(image_array,axis=3)
-    #X_test=np.expand_dims(X_test,axis=0)
-    print('Shape of X_test',X_test.shape)
-
-   
-
+    X_test=np.expand_dims(X_test,axis=0)
+    
     #do prediction
-    print('Ready to do prediction')
     y_hat = model.predict([X_test,T_test])
-
-
+    
     #output results
-    y_hat_lat=y_hat[0]
-    y_hat_long=y_hat[1]
+    y_hat_lat=y_hat[0,0]
+    y_hat_long=y_hat[0,1]
         
     y_hat_lat=scale_up(y_hat_lat,latend,latstart)
     y_hat_long=scale_up(y_hat_long,longend,longstart)
 
-    point1=(y_hat_lat[0],y_hat_long[0])
+    point1=(y_hat_lat,y_hat_long)
     point2=(y_lat,y_long)
     
     loss_nm=geodesic(point1,point2).nautical
 
-    print('Estimated latitude, longitude:',y_hat_lat[0],',',y_hat_long[0])
-    print('Actual latitude, longitude:',y_lat,',',y__long)
+    print('Estimated latitude, longitude:',y_hat_lat,',',y_hat_long)
+    print('Actual latitude, longitude:',y_lat,',',y_long)
     print('Error in nautical miles:',loss_nm)
 
 def on_log(mqttc, obj, level, string):
-    print(string)
+    #print(string)
+    return
 
 def on_message(client,userdata, msg):
         
     try:
-        print("Celestial image received!",datetime.now())
+        #check if picture or filename
+        if len(msg.payload)<100:
+            #print('Filename received!')
+            global file_name
+            file_name=msg.payload.decode()
             
-        #use numpy to construct an array from the bytes
-        image_array = np.fromstring(msg.payload, dtype='uint8')
-        print('Have image array:',image_array.shape)
-        print('Beginning reshaping')
-        reshaped_image=image_array.reshape(1080,1920,3)
-        print('Ending reshaping:',reshaped_image.shape)
-        
-        #show it
-        #imS = cv2.resize(reshaped_image, (960, 540)) 
-        #cv2.imshow("Sky at inference", imS)
-        #cv2.waitKey()
-
-        
-        file_name='39.93706479334325+-77.09413134351726+2020-05-25T22:56:03.png'
-        print('going to inference')
-        inference(reshaped_image,file_name)
+        else:
+            print("Celestial image received!",datetime.now())
+                
+            #use numpy to construct an array from the bytes
+            image_array = np.fromstring(msg.payload, dtype='uint8')
+            reshaped_image=image_array.reshape(224,224)
+            
+            #do inference
+            inference(reshaped_image,file_name)
         
 
     except:
@@ -158,43 +148,27 @@ def on_message(client,userdata, msg):
 
 def on_connect_local(client, userdata, flags, rc):
     print("connected to local broker with rc: " + str(rc))
-    client.subscribe(LOCAL_MQTT_TOPIC)
+    client.subscribe(LOCAL_MQTT_TOPIC,qos=2)
+   
+#loads model and gets ready for incoming picture
+model=setup()
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--model',type=boolean )
-    args = parser.parse_args()
-    print(args)
-    
-    #loads model and gets ready for income picture
-    print('Starting load model and setup')
-    model=setup()
+#set up MQTT client
+LOCAL_MQTT_HOST="mosq-broker"
+LOCAL_MQTT_PORT=1883
+LOCAL_MQTT_TOPIC="celestial"
 
-    #waits for incoming picture
-    LOCAL_MQTT_HOST="mosq-broker"
-    LOCAL_MQTT_PORT=1883
-    LOCAL_MQTT_TOPIC="celestial"
+#now connect and subscribe
+local_mqttclient = mqtt.Client()
+local_mqttclient.on_connect = on_connect_local
+local_mqttclient.connect(LOCAL_MQTT_HOST, LOCAL_MQTT_PORT, 3600)
+#local_mqttclient.on_log = on_log
 
-    print('Connecting to broker and waiting for picture')
-    local_mqttclient = mqtt.Client()
-    local_mqttclient.on_connect = on_connect_local
-    local_mqttclient.connect(LOCAL_MQTT_HOST, LOCAL_MQTT_PORT, 3600)
-    local_mqttclient.on_log = on_log
-    local_mqttclient.on_message = on_message
+#action if message
+local_mqttclient.on_message = on_message
+
+#loop keeps it listening
+local_mqttclient.loop_forever()
 
 
-    local_mqttclient.loop_forever()
 
-
-if __name__ == "__main__":
-    main()
-
-parser = argparse.ArgumentParser(description='Process some integers.')
-parser.add_argument('integers', metavar='N', type=int, nargs='+',
-                    help='an integer for the accumulator')
-parser.add_argument('--sum', dest='accumulate', action='store_const',
-                    const=sum, default=max,
-                    help='sum the integers (default: find the max)')
-
-args = parser.parse_args()
-print(args.accumulate(args.integers))

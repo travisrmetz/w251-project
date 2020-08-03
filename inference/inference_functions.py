@@ -2,7 +2,7 @@
 import cv2
 import numpy as np
 
-def scale_down(numbers):
+def scale_down(numbers,top,bottom):
     top=max(numbers)
     bottom=min(numbers)
     middle=(top+bottom)/2
@@ -11,11 +11,11 @@ def scale_down(numbers):
     revised=[x/number_range*2 for x in revised]
     return revised,top,bottom
 
-def scale_up(numbers,top,bottom):
+def scale_up(number,top,bottom):
     middle=(top+bottom)/2
     number_range=top-bottom
-    revised=[x*number_range/2 for x in numbers]
-    revised=[x+middle for x in revised]
+    revised=number*number_range/2 
+    revised=revised+middle
     return revised
 
 def load_image(image_path, dim=(224,224), channels=1):
