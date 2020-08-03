@@ -1,6 +1,6 @@
 [_Return to the white paper_](https://github.com/travisrmetz/w251-project#Train)
 
-# Celestial Inference at the Edge
+# Preprocessing Images to Numpy Arrays
 ## W251 - Final Project - Metz/Tozzi - Summer 2020
 ### Setting up the Image Preprocessing Container on a Virtual Server
 
