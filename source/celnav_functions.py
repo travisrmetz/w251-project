@@ -3,13 +3,10 @@ def load_image(image_path, dim=(224,224), channels=1):
     Loads a single image as a Numpy array and resizes it as
     desired.  The default dimensions are consistent with
     those expected by the VGG models.  
-
     Args:
     image_path: str pointing to the file
-
     dim: Two-element tuple giving the desired height
          and width of the processed image
-
     Returns:
     image:  A single-channel Numpy array
     """
@@ -26,15 +23,12 @@ def build_input(image_dir, channels=1, dim=(224,224)):
     Loads all of the images into a single numpy array.
     Assumes that there are 101 equally-spaced images
     spanning lattitudes from 35N to 45N.  
-
     Args:
         image_dir: str giving name of the image directory
-
     Returns:
     X:  A 3-dimensional numpy array containing the
         images. Image height and width are set by
         `load_images` and default to 224 x 224.
-
     y:  A 1-dimensional numpy array of target lattitudes.
     """
     X = []
@@ -74,39 +68,40 @@ def build_labels(image_dir):
     return np.array(y), np.array(times, dtype='datetime64')
 
 
-def normalize_times(times):
+def normalize_times(times, t_min, t_max):
     """
     Converts times to a float bounded by [0,1]
     
     Args:
         times: numpy.array with dtype datetime64
+				t_min: time to fix as 0
+				t_max: time to fix as 1
         
     Returns:
         numpy.array of decimal times bounded on [0,1]
     """
-    time_range = (times.max() - times.min()).astype('float64')
-    seconds_from_t0 = (times - times.min()).astype('float64')
+    time_range = (t_min - t_max).astype('float64')
+    seconds_from_t0 = (times - t_min).astype('float64')
     
     return seconds_from_t0 / time_range
 
 
-def normalize_y(y):
+def normalize_y(y, lat_min, lat_range, long_min, long_range):
     """
     Converts lats and longs to values bounded by [0,1]
     
     Args:
-        y:  numpy.array of dimensions observations x 2
+        y:          numpy.array of dimensions observations x 2
+				lat_min:    lat to set as 0
+				lat_range:  difference between min and max lat in degrees
+				long_min:   long to set as 0
+				long_range: difference between min and max long in degrees
         
     Returns
         numpy.array: normalized values
         
         tuple: values needed by the Haversine loss function
-    """
-    lat_min = y[:,0].min()
-    lat_range = y[:,0].max() - y[:,0].min()
-    long_min = y[:,1].min()
-    long_range = y[:,1].max() - y[:,1].min()
-    
+    """  
     y_norm = np.zeros(y.shape)
     
     y_norm[:,0] = (y[:,0] - lat_min) / lat_range
