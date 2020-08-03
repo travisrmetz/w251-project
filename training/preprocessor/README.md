@@ -6,9 +6,9 @@
 
 This section provides basic steps to set up the preprocessor described in section 5 of our white paper.
 
-### Edit `preprocess.yml`
+### Edit the Input File
 
-This file provides user inputs for the preprocessing tasks.  It is easiest to edit it now, but it can be done later and copied to containers using `docker cp`.
+Edit the `preprocess.yml` file.  This file provides user inputs for the preprocessing tasks.  It is easiest to edit it now, but it can be done later and copied to containers using `docker cp`.
 
 ### Build the Container
 
@@ -26,7 +26,7 @@ mkdir <directory>
 ```
 
 ### Run the Container
-Edit the `preprocessor.yml` file as necessary, spin up a container, and preprocess using the following commands.
+Copy in a new `preprocessor.yml` file as necessary, spin up a container, and preprocess using the following commands.
 
 ```
 docker run --name preproc -dit -v <train/validation directory>:<train/validation directory> -v <test directory>:<test directory> -v <directory where you want the arrays>:<directory where you want the arrays> preprocessor
