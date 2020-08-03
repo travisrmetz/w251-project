@@ -6,6 +6,10 @@
 
 This section provides basic steps to set up the preprocessor described in section 5 of our white paper.
 
+### Edit `preprocess.yml`
+
+This file provides user inputs for the preprocessing tasks.  It is easiest to edit it now, but it can be done later and copied to containers using `docker cp`.
+
 ### Build the Container
 
 Assuming that you have pulled the repo to the virtual server, the following commands will build the container.
