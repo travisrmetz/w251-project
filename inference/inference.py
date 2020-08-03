@@ -67,7 +67,7 @@ def setup():
     dtstart= config_data['dtstart']
     global dtend
     dtend=config_data['dtend']
-    
+    print(config_data)
     
     #get model from s3
     #model=load_model_from_s3()
@@ -119,7 +119,7 @@ def inference(image_array,file_name):
     print('Error in nautical miles:',loss_nm)
 
 def on_log(mqttc, obj, level, string):
-    #print(string)
+    print(string)
     return
 
 def on_message(client,userdata, msg):

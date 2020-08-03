@@ -5,17 +5,15 @@ import numpy as np
 def scale_down(numbers,top,bottom):
     top=max(numbers)
     bottom=min(numbers)
-    middle=(top+bottom)/2
     number_range=top-bottom
-    revised=[x-middle for x in numbers]
-    revised=[x/number_range*2 for x in revised]
+    revised=[x-bottom for x in numbers]
+    revised=[x/number_range for x in revised]
     return revised,top,bottom
 
 def scale_up(number,top,bottom):
-    middle=(top+bottom)/2
     number_range=top-bottom
-    revised=number*number_range/2 
-    revised=revised+middle
+    revised=number*number_range 
+    revised=revised+bottom
     return revised
 
 def load_image(image_path, dim=(224,224), channels=1):
@@ -89,56 +87,8 @@ def normalize_times(time,dtstart,dtend):
     dtend=np.datetime64(dtend)
     time_range = (dtend - dtstart).astype('float64')
     seconds_from_t0 = (time - dtstart).astype('float64')
-    
     return seconds_from_t0 / time_range
 
-
-def normalize_y(y):
-    """
-    Converts lats and longs to values bounded by [0,1]
-    
-    Args:
-        y:  numpy.array of dimensions observations x 2
-        
-    Returns
-        numpy.array: normalized values
-        
-        tuple: values needed by the Haversine loss function
-    """
-    lat_min = y[:,0].min()
-    lat_range = y[:,0].max() - y[:,0].min()
-    long_min = y[:,1].min()
-    long_range = y[:,1].max() - y[:,1].min()
-    
-    y_norm = np.zeros(y.shape)
-    
-    y_norm[:,0] = (y[:,0] - lat_min) / lat_range
-    y_norm[:,1] = (y[:,1] - long_min) / long_range
-    
-    return y_norm, (lat_min, lat_range, long_min, long_range)
-
-
-def evaluate_model(learner, x_test, t_test, y_test,
-                  x_train, t_train, y_train):
-    y_hat = learner.model.predict([x_test, t_test])
-    y_hat_train = learner.model.predict([x_train, t_train])
-
-    plt.scatter(y_train[:,0], y_hat_train[:,0])
-    plt.scatter(y_test[:,0], y_hat[:,0])
-    plt.title('Predicted lat vs. True lat')
-    plt.xlabel('True lat')
-    plt.ylabel('Predicted lat')
-    plt.show()
-
-    plt.scatter(y_train[:,1], y_hat_train[:,1])
-    plt.scatter(y_test[:,1], y_hat[:,1])
-    plt.title('Predicted long vs. True long')
-    plt.xlabel('True long')
-    plt.ylabel('Predicted long')
-    plt.show()
-
-    print('train loss - ' + str(learner.model.history.history['loss'][-1]))
-    print('val loss - ' + str(learner.model.history.history['val_loss'][-1]))
     
     
 def haversine_loss(y_true, y_pred, denorm=(36.0, 4.0, -78.0, 4.0), R=3443.92):
