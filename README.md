@@ -85,10 +85,9 @@ Naturally, we must rely on synthetic images to train the model.  We adapted the 
 [Stellarium](https://stellarium.org) generates high-quality images of the sky for arbitrary geographic positions, times, azimuths (the heading of the virtual camera in true degrees), altitudes (the angular elevation of the virtual camera), camera field of view, and observer elevations [[10]](#10).  Stellarium's functionality is aimed at practitioners and hobbiests, it has been in continual development since 2006.  In addition to rendering celestial bodies, Stellarium can render satellites, meteor showers, and other astronomical events.  The program uses a JavaScript-based scripting language system to automate sequences of observations.
 
 ### 4.2 Containerizing Stellarium
-Stellarium is designed for desktop operation.  Our Docker contianer allows the program to be run on a headless server in the cloud.  The basic container operation is outlined in the figure below.  A python script reads input from a YAML file and generates and outputs an SSC script that automates image generation.  Stellarium runs using a customized configuration file that prevents certain modules from running.  Stellarium executes the SSC script.  The image files are saved to an S3 mountpoint that the container accesses on the host system.
+Stellarium is designed for desktop operation.  Our Docker contianer allows the program to be run on a headless server in the cloud.  The basic container operation is outlined in the figure below.  A python script reads input from a YAML file and generates and outputs an SSC script that automates image generation.  Stellarium runs using a customized configuration file that prevents certain modules from running.  Stellarium executes the SSC script.  The image files are saved either to local storage on the host or to an S3 mountpoint that the container accesses on the host system.  From there, the images can be preprocessed using the Docker container discussed in section 5.1 below.
 
-[![](https://mermaid.ink/img/eyJjb2RlIjoiZ3JhcGggVERcblx0QVtZQU1MIEZpbGVdIC0tZnJvbSBob3N0LS0-IEJbU1NDIEdlbmVyYXRvciAtIFB5dGhvbl1cblx0QiAtLT4gQ1tTdGVsbGFyaXVtXVxuXHRDIC0tPiBEW1h2ZkJdXG5cdEQgLS1zY3JlZW4gY2FwdHVyZS0tPiBDXG5cdEMgLS10byBob3N0J3MgbW91bnRwb2ludC0tPkVbUzMgQnVja2V0XVxuICBcblx0XHRcdFx0XHQiLCJtZXJtYWlkIjp7InRoZW1lIjoibmV1dHJhbCJ9LCJ1cGRhdGVFZGl0b3IiOmZhbHNlfQ)](https://mermaid-js.github.io/mermaid-live-editor/#/edit/eyJjb2RlIjoiZ3JhcGggVERcblx0QVtZQU1MIEZpbGVdIC0tZnJvbSBob3N0LS0-IEJbU1NDIEdlbmVyYXRvciAtIFB5dGhvbl1cblx0QiAtLT4gQ1tTdGVsbGFyaXVtXVxuXHRDIC0tPiBEW1h2ZkJdXG5cdEQgLS1zY3JlZW4gY2FwdHVyZS0tPiBDXG5cdEMgLS10byBob3N0J3MgbW91bnRwb2ludC0tPkVbUzMgQnVja2V0XVxuICBcblx0XHRcdFx0XHQiLCJtZXJtYWlkIjp7InRoZW1lIjoibmV1dHJhbCJ9LCJ1cGRhdGVFZGl0b3IiOmZhbHNlfQ)
-
+[![](https://mermaid.ink/img/eyJjb2RlIjoiZ3JhcGggVERcbiAgQVtZQU1MIEZpbGVdIC0tZnJvbSBob3N0LS0-IEIoU1NDIEdlbmVyYXRvciAtIFB5dGhvbilcbiAgQiAtLT4gQyhTdGVsbGFyaXVtKVxuICBDIC0tPiBEKFh2ZmIpXG4gIEQgLS1zY3JlZW4gY2FwdHVyZS0tPiBDXG4gIEMgLS10byBob3N0LS0-IEVbUzMgQnVja2V0XVxuICBDIC0tdG8gaG9zdC0tPiBGW0xvY2FsIFN0b3JhZ2VdXG4gIEYgLS1mcm9tIGhvc3QtLT4gRyhQcmVwcm9jZXNzb3IgLSBOdW1weSBvdXRwdXQpXG4gIEcgLS10byBob3N0LS0-IEVcbiAgRyAtLXRvIGhvc3QtLT4gRlxuXG5cdFx0IiwibWVybWFpZCI6eyJ0aGVtZSI6Im5ldXRyYWwifSwidXBkYXRlRWRpdG9yIjpmYWxzZX0)](https://mermaid-js.github.io/mermaid-live-editor/#/edit/eyJjb2RlIjoiZ3JhcGggVERcbiAgQVtZQU1MIEZpbGVdIC0tZnJvbSBob3N0LS0-IEIoU1NDIEdlbmVyYXRvciAtIFB5dGhvbilcbiAgQiAtLT4gQyhTdGVsbGFyaXVtKVxuICBDIC0tPiBEKFh2ZmIpXG4gIEQgLS1zY3JlZW4gY2FwdHVyZS0tPiBDXG4gIEMgLS10byBob3N0LS0-IEVbUzMgQnVja2V0XVxuICBDIC0tdG8gaG9zdC0tPiBGW0xvY2FsIFN0b3JhZ2VdXG4gIEYgLS1mcm9tIGhvc3QtLT4gRyhQcmVwcm9jZXNzb3IgLSBOdW1weSBvdXRwdXQpXG4gIEcgLS10byBob3N0LS0-IEVcbiAgRyAtLXRvIGhvc3QtLT4gRlxuXG5cdFx0IiwibWVybWFpZCI6eyJ0aGVtZSI6Im5ldXRyYWwifSwidXBkYXRlRWRpdG9yIjpmYWxzZX0)
 ### 4.3 Installing the Image Generator
 
 #### 4.3.1 Files
@@ -145,7 +144,7 @@ The steps above can be automated further as needed.  Multiple instances of the i
 We built a Docker container to facilitate training in the cloud.  The container is built on the base TensorFlow container [[11]](#11) and facilitates deploying instances to allow simultaneous training of models representing different spatial-temporal regions.  Our model is written in TensorFlow and requires two inputs---one image and one floating point value identifying the time at which the image was generated.
 
 ### 5.1 Preprocessing
-We convert images into Numpy arrays with dimensions `(None, 224, 224, 1)`  with a script that leans heavily on [OpenCV](https://opencv.org) [[12]](#12).  Images are read from a single  directory.  The images are reduced to the the target resolution and are stacked in a single Numpy array.  Time and true position are parsed from the input file names which follow the format `<lat>+<long>+<YYYY>-<MM>-<DD>T<hh>:<mm>:<ss>.png`.  Date time groups are converted to `numpy.datetime64` and are normalized on `[0,1]` based on the temporal bounds on the training set.  Latitudes and longitudes are normalized on `[0,1]` based on the maximum extent of the geographic area under consideration and formed into an array with dimensions `(None, 2)`.
+We provide a Docker container to handle the task of preprocessing images into Numpy arrays ready to be used in training.  The container converts images into Numpy arrays with dimensions `(None, 224, 224, 1)`  with a script that leans heavily on [OpenCV](https://opencv.org) [[12]](#12).  Images are read from a single  directory.  The images are reduced to the the target resolution and are stacked in a single Numpy array.  Time and true position are parsed from the input file names which follow the format `<lat>+<long>+<YYYY>-<MM>-<DD>T<hh>:<mm>:<ss>.png`.  Date time groups are converted to `numpy.datetime64` and are normalized on `[0,1]` based on the temporal bounds on the training set.  Latitudes and longitudes are normalized on `[0,1]` based on the maximum extent of the geographic area under consideration and formed into an array with dimensions `(None, 2)`.
 
 The data are broken into training and validation sets based on a user-provided split and random assignment.
 
@@ -203,7 +202,27 @@ done
 
 Edit the `ssc_gen.yml` file to change the target directory to `/data/image_test` and build 1,000 test images.
 
+### Preprocessing the images
+We will preprocess the image files in place in preparation for training.  To do this, `cd` to the preprocessor directory and build the dockerfile.
 
+```
+cd /root/w251-project/training/preprocessor
+docker build -t preprocessor -f preprocessor.dockerfile .
+```
+
+Edit the `preprocessor.yml` file as necessary, spin up a container, and preprocess using the following commands.
+
+```
+docker run --name preproc -dit -v /data/image_train_val:/data/image_train_val -v /data/image_test:/data/image_test -v /data/sets:/data/sets preprocessor
+docker exec -d preproc python3 preprocessor.py
+```
+
+Once the preprocessing is complete and you have verified that the `.npy` files are where you expect, tear down the container.
+
+```
+docker stop preproc
+docker rm preproc
+```
 
 
 ## References
