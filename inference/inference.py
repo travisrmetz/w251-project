@@ -115,7 +115,7 @@ def inference(image_array,file_name):
     loss_nm=geodesic(point1,point2).nautical
 
     print('Estimated latitude, longitude:',y_hat_lat,',',y_hat_long)
-    print('Actual latitude, longitude:',y_lat,',',y_long)
+    print('Actual latitude, longitude, time:',y_lat,',',y_long,time)
     print('Error in nautical miles:',loss_nm)
 
 def on_log(mqttc, obj, level, string):
