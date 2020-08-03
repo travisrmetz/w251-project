@@ -148,6 +148,8 @@ We provide a Docker container to handle the task of preprocessing images into Nu
 
 The data are broken into training and validation sets based on a user-provided split and random assignment.
 
+[_Preprocessor instructions_](https://github.com/travisrmetz/w251-project/edit/master/training/preprocessor/README.md)
+
 ### 5.2 Training
 We use the [ktrain](https://towardsdatascience.com/ktrain-a-lightweight-wrapper-for-keras-to-help-train-neural-networks-82851ba889c) package to train the models [[13]](#13).  The `tensorflow.keras.model` object is wrapped in a `ktrain.learner` object to simplify training and access ktrain's built in callbacks.  We train using the `ktrain.learner.autofit` function with an initial maximum learning rate of 10e-4.  The training function applies the triangular learning rate policy with reduction in maximum learning rate when a plateau is encountered on the validation loss introduced by Smith [[14]](#14).
 
@@ -208,6 +210,12 @@ We will preprocess the image files in place in preparation for training.  To do 
 ```
 cd /root/w251-project/training/preprocessor
 docker build -t preprocessor -f preprocessor.dockerfile .
+```
+
+We will make a new directory to store our processed Numpy arrays.
+
+```
+mkdir /data/sets
 ```
 
 Edit the `preprocessor.yml` file as necessary, spin up a container, and preprocess using the following commands.
