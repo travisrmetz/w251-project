@@ -54,6 +54,8 @@ def setup():
     #get configurationvalues
     with open('inference.yml') as config_file:
         config_data = yaml.load(config_file)
+    
+    global image_dir
     image_dir = config_data['image_dir']
     global latstart 
     latstart= config_data['latstart']
@@ -67,6 +69,7 @@ def setup():
     dtstart= config_data['dtstart']
     global dtend
     dtend=config_data['dtend']
+    
     print(config_data)
     
     #get model from s3
@@ -74,8 +77,10 @@ def setup():
 
     #get model from local directory
     #local_model_dir="/inference/small_model"
-    local_model_path="/inference/model/one_night_model.h5"
-    print ('Loading model')
+    #local_model_path="/inference/model/one_night_model.h5"
+    local_model_path="/inference/model/model_for_travis.h5"
+    
+    print ('Loading model', local_model_path)
     model=tf.keras.models.load_model(local_model_path,compile=False)
     #print (model.summary())
     print('Compiling model')
@@ -100,7 +105,11 @@ def inference(image_array,file_name):
     X_test=np.expand_dims(X_test,axis=0)
     
     #do prediction
+    print('about to do prediction')
+    #print('X_test:',X_test[0:20])
+    #print('t_test:',T_test)
     y_hat = model.predict([X_test,T_test])
+    #print('y_hat:',y_hat)
     
     #output results
     y_hat_lat=y_hat[0,0]
@@ -113,7 +122,7 @@ def inference(image_array,file_name):
     point2=(y_lat,y_long)
     
     loss_nm=geodesic(point1,point2).nautical
-
+    print('\n------------------------------------------------------------------')
     print('Estimated latitude, longitude:',y_hat_lat,',',y_hat_long)
     print('Actual latitude, longitude, time:',y_lat,',',y_long,time)
     print('Error in nautical miles:',loss_nm)
@@ -153,22 +162,48 @@ def on_connect_local(client, userdata, flags, rc):
 #loads model and gets ready for incoming picture
 model=setup()
 
-#set up MQTT client
-LOCAL_MQTT_HOST="mosq-broker"
-LOCAL_MQTT_PORT=1883
-LOCAL_MQTT_TOPIC="celestial"
+mqtt_flag=True
 
-#now connect and subscribe
-local_mqttclient = mqtt.Client()
-local_mqttclient.on_connect = on_connect_local
-local_mqttclient.connect(LOCAL_MQTT_HOST, LOCAL_MQTT_PORT, 3600)
-#local_mqttclient.on_log = on_log
+if mqtt_flag:
+    #set up MQTT client
+    LOCAL_MQTT_HOST="mosq-broker"
+    LOCAL_MQTT_PORT=1883
+    LOCAL_MQTT_TOPIC="celestial"
 
-#action if message
-local_mqttclient.on_message = on_message
+    #now connect and subscribe
+    local_mqttclient = mqtt.Client()
+    local_mqttclient.on_connect = on_connect_local
+    local_mqttclient.connect(LOCAL_MQTT_HOST, LOCAL_MQTT_PORT, 3600)
+    #local_mqttclient.on_log = on_log
 
-#loop keeps it listening
-local_mqttclient.loop_forever()
+    #action if message
+    local_mqttclient.on_message = on_message
 
+    #loop keeps it listening
+    local_mqttclient.loop_forever()
+
+else:
+    path, dirs, files = next(os.walk(image_dir))
+    file_count = len(files)
+    for i in range(10):
+        random_file=files[random.randint(0,file_count-1)]
+        print('Random file selected:', random_file)
+
+        image_path=os.path.join(image_dir,random_file)    
+
+        #doing image work here to reduce size of file sent on MQTT
+        #read in image in black and white and convert size
+        image = cv2.imread(image_path, 0) #0=bw
+        dim=(224,224)
+        image = cv2.resize(image, dim)
+        print("Celestial image received!",datetime.now())
+                    
+        #use numpy to construct an array from the bytes
+        #image_array = np.fromstring(msg.payload, dtype='uint8')
+        #reshaped_image=image_array.reshape(224,224)
+        
+        #do inference
+        inference(image,random_file)
+            
 
 
