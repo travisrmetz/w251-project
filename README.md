@@ -86,7 +86,7 @@ The haversine function is strictly positive and is continuously differentiable i
 *[Return to contents](#Contents)*
 
 ## <a id="Imgen">4.0 Generating Synthetic Images
-Naturally, we must rely on synthetic images to train the model.  We adapted the open source astronomy program _Stellarium_ for use in the cloud as an image generator.  In this section we will detail our method for adpating Stellarium and will provide details for running the image generator in the cloud with images being stored in an S3 bucket.
+We must rely on synthetic images to train the model because we cannot otherwise capture future configurations of the sky.  We adapted the open source astronomy program _Stellarium_ for use in the cloud as an image generator.  In this section we will detail our method for adpating Stellarium and will provide details for running the image generator in the cloud with images being stored in an S3 bucket.
  
  ### 4.1 Stellarium Overview
 [Stellarium](https://stellarium.org) generates high-quality images of the sky for arbitrary geographic positions, times, azimuths (the heading of the virtual camera in true degrees), altitudes (the angular elevation of the virtual camera), camera field of view, and observer elevations [[10]](#10).  Stellarium's functionality is aimed at practitioners and hobbiests, it has been in continual development since 2006.  In addition to rendering celestial bodies, Stellarium can render satellites, meteor showers, and other astronomical events.  The program uses a JavaScript-based scripting language system to automate sequences of observations.
@@ -171,6 +171,11 @@ Training loss converged to approximately 5.5 nautical miles and validation loss 
 ![System diagram](https://github.com/travisrmetz/w251-project/blob/master/report_images/train_val_loss.png)
 
 *[Return to contents](#Contents)*
+
+## 5.3 Performance on a Notional Vessel Transit
+We consider a four-hour period in the test area defined above.  A notional vessel is in position TODO on a course of 208° true---that is, referenced to true north---at a speed of 12 nautical miles per hour or _knots_.  A nautical mile is slightly longer than a statute mile.  The vessel employs our system to fix its position hourly beginning at 22:00 UTC.  The chart below is overlaid with the vessel's actual positions in blue and predicted positions in red.
+
+![Notional transit](https://github.com/travisrmetz/w251-project/blob/master/report_images/chart_12200.png)
 
 ## 4.0 Experimental Results
 
