@@ -1,4 +1,3 @@
-
 # Toward Automated Celestial Navigation with Deep Learning
 **UC Berkeley MIDS W251**
 
@@ -151,9 +150,17 @@ The data are broken into training and validation sets based on a user-provided s
 [_Preprocessor instructions_](https://github.com/travisrmetz/w251-project/tree/master/training/preprocessor)
 
 ### 5.2 Training
-We use the [ktrain](https://towardsdatascience.com/ktrain-a-lightweight-wrapper-for-keras-to-help-train-neural-networks-82851ba889c) package to train the models [[13]](#13).  The `tensorflow.keras.model` object is wrapped in a `ktrain.learner` object to simplify training and access ktrain's built in callbacks.  We train using the `ktrain.learner.autofit` function with an initial maximum learning rate of 10e-4.  The training function applies the triangular learning rate policy with reduction in maximum learning rate when a plateau is encountered on the validation loss introduced by Smith [[14]](#14).
+We use the [ktrain](https://towardsdatascience.com/ktrain-a-lightweight-wrapper-for-keras-to-help-train-neural-networks-82851ba889c) package to train the models [[13]](#13).  The `tensorflow.keras.model` object is wrapped in a `ktrain.learner` object to simplify training and access ktrain's built in callbacks.  We train using the `ktrain.learner.autofit` function with an initial maximum learning rate of 2-4.  The training function applies the triangular learning rate policy with reduction in maximum learning rate when a plateau is encountered on the validation loss introduced by Smith [[14]](#14).
 
 The container saves models in the `.h5` format to a user-specified directory that maps to the host.  In this way, the model can be saved either locally or to object storage.
+
+We established a experimental space from 36N to 40N, from 074W to 078W, and from 2020-05-25T22:00:00 to 2020-05-26T02:00:00.  We trained the model using 6,788 images reduced to single channel 224 x 224.  We validated on 715 images similarly reduced in color and resolution.  The base images were of different aspect ratios.  The training routine uses a batch size of 32.  The figure below details the application of the triangular learning rate policy.
+
+![System diagram](https://github.com/travisrmetz/w251-project/blob/master/report_images/lr_policy.png)
+
+Training loss converged to approximately 5.5 nautical miles and validation loss converged to just over 6.5 nautical miles after 52 epochs as shown below.
+
+![System diagram](https://github.com/travisrmetz/w251-project/blob/master/report_images/train_val_loss.png)
 
 *[Return to contents](#Contents)*
 
