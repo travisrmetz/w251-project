@@ -12,6 +12,9 @@ A third container (`inference`) is described in the README at \inference.  It su
 
 In simulation mode, the camera container send a new image to the broker (and thus on to the inference container upon a key click.  The esc button is used to exit the send_image program.
 
+Link to a demo video:  https://zoom.us/rec/play/vcEvdr39r2g3SNPDtASDV_UtW421e_-s1SUf-PYOnU-zACRQMVqmMOZGNLBaIGprp4ITygeePJec76GT
+
+
 
 #### create jetson network for various containers
 docker network create project

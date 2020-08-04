@@ -105,7 +105,7 @@ def inference(image_array,file_name):
     X_test=np.expand_dims(X_test,axis=0)
     
     #do prediction
-    print('about to do prediction')
+    print('Model being called for prediction....')
     #print('X_test:',X_test[0:20])
     #print('t_test:',T_test)
     y_hat = model.predict([X_test,T_test])
@@ -122,11 +122,11 @@ def inference(image_array,file_name):
     point2=(y_lat,y_long)
     
     loss_nm=geodesic(point1,point2).nautical
-    print('\n------------------------------------------------------------------')
     print('Estimated latitude, longitude:',y_hat_lat,',',y_hat_long)
     print('Actual latitude, longitude, time:',y_lat,',',y_long,time)
     print('Error in nautical miles:',loss_nm)
-
+    print('\n------------------------------------------------------------------\n')
+    
 def on_log(mqttc, obj, level, string):
     print(string)
     return
@@ -136,12 +136,12 @@ def on_message(client,userdata, msg):
     try:
         #check if picture or filename
         if len(msg.payload)<100:
-            #print('Filename received!')
+            print('Filename received!')
             global file_name
             file_name=msg.payload.decode()
             
         else:
-            print("Celestial image received!",datetime.now())
+            print("Celestial image received!",datetime.now(),'\n')
                 
             #use numpy to construct an array from the bytes
             image_array = np.fromstring(msg.payload, dtype='uint8')
@@ -157,7 +157,7 @@ def on_message(client,userdata, msg):
 
 def on_connect_local(client, userdata, flags, rc):
     print("connected to local broker with rc: " + str(rc))
-    client.subscribe(LOCAL_MQTT_TOPIC,qos=2)
+    client.subscribe(LOCAL_MQTT_TOPIC,qos=1)
    
 #loads model and gets ready for incoming picture
 model=setup()
