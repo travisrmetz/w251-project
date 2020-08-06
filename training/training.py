@@ -103,9 +103,20 @@ def main():
         model_path  = config_data['model_path']
         lr          = config_data['lr']
     
+    # Load the data
+    x_train = np.load(os.path.join(set_path, 'x_train.npy'))
+    x_val   = np.load(os.path.join(set_path, 'x_val.npy'))
+    x_test  = np.load(os.path.join(set_path, 'x_test.npy'))
+    t_train = np.load(os.path.join(set_path, 't_train.npy'))
+    t_val   = np.load(os.path.join(set_path, 't_val.npy'))
+    t_test  = np.load(os.path.join(set_path, 't_test.npy'))
+    y_train = np.load(os.path.join(set_path, 'y_train.npy'))
+    y_val   = np.load(os.path.join(set_path, 'y_val.npy'))
+    y_test  = np.load(os.path.join(set_path, 'y_test.npy'))
+    
     # Build the model
     input_image = Input(shape=x_train[0].shape)
-    input_time = Input(shape=times[0].shape)
+    input_time = Input(shape=t_train[0].shape)
     i = Conv2D(filters=5, kernel_size=10, padding='same', activation='relu')(input_image)
     i = Conv2D(filters=1, kernel_size=10, padding='same', activation='relu')(i)
     i = Flatten()(i)
@@ -120,17 +131,6 @@ def main():
     model.compile(optimizer='adam',
                  loss=haversine_loss,
                  metrics=[haversine_loss])
-    
-    # Load the data
-    x_train = np.load(os.path.join(set_path, 'x_train.npy'))
-    x_val   = np.load(os.path.join(set_path, 'x_val.npy'))
-    x_test  = np.load(os.path.join(set_path, 'x_test.npy'))
-    t_train = np.load(os.path.join(set_path, 't_train.npy'))
-    t_val   = np.load(os.path.join(set_path, 't_val.npy'))
-    t_test  = np.load(os.path.join(set_path, 't_test.npy'))
-    y_train = np.load(os.path.join(set_path, 'y_train.npy'))
-    y_val   = np.load(os.path.join(set_path, 'y_val.npy'))
-    y_test  = np.load(os.path.join(set_path, 'y_test.npy'))
     
     # Wrap the model and train
     learner = ktrain.get_learner(model, train_data=([x_train, t_train], y_train),
