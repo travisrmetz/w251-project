@@ -1,3 +1,5 @@
+[_Return to the white paper_](https://github.com/travisrmetz/w251-project#Train)
+
 # Celestial Inference at the Edge
 ## W251 - Final Project - Tozzi/Metz - Summer 2020
 ### Setting up Containers on Jetson for Inference
