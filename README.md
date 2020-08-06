@@ -1,3 +1,4 @@
+
 # Toward Automated Celestial Navigation with Deep Learning
 **UC Berkeley MIDS W251**
 
@@ -14,6 +15,8 @@
 
 [5.0 Training the Model](#Train)
 
+[6.0 Inferencing at the Edge](#Edge)
+
 
 
 ## <a id="Introduction">1.0 Introduction
@@ -29,13 +32,13 @@ In current practice, marine celestial navigation requires:
 - A _dead reckoning_ plot on which the navigator estimates the ship's track.
 - For manual computation, a number of volumes containing published tables.
 
-An automated hybrid inertial-celestial navigation system for aircraft, referred to as _astroinertial_ navigation, exists aboard high-end military aircraft and missile systems.  These systems rely on catalogs of stars and a estimated position developed through integration of acceleromter data [[x]](#x).
+An automated hybrid inertial-celestial navigation system for aircraft, referred to as _astroinertial_ navigation, exists aboard high-end military aircraft and missile systems.  These systems rely on catalogs of stars and an estimated position developed through integration of accelerometer data [[x]](#x).
 
 ### 1.2 Intent of this Project
 We want to explore the possibility of applying deep learning to the task of automating celestial  navigation.  We entered this project wanting to answer the following questions:
 
-- Can we demonstrate the possiblity of a viable solution to marine celestial navigation by casting it as a deep regression problem?
-- What is the minimum amount of information that we need to provide such a system?  In particular, can we build a system that suggests—if it does not achieve—a viable solution that does not take an estimated positon, as is computed in an astroinertial system or as is estimated by mariners through dead reakoning, as input?
+- Can we demonstrate the possibility of a viable solution to marine celestial navigation by casting it as a deep regression problem?
+- What is the minimum amount of information that we need to provide such a system?  In particular, can we build a system that suggests—if it does not achieve—a viable solution that does not take an estimated position, as is computed in an astroinertial system or as is estimated by mariners through dead reckoning, as input?
 
 *[Return to contents](#Contents)*
 
@@ -63,22 +66,21 @@ Our system consists of a cloud component and an edge component.  An image genera
 
 
 ## <a id="Model">3.0 The Model
-Our model is a relatively simple CNN tuned to provide reasonably accurate predictions over a given waterspace and 
-
+Our model is a relatively simple CNN tuned to provide reasonably accurate predictions over a navigationally-relevant geographical area over a short but relevant time period.  We do not claim that this architecture is an ideal candidate for a production version of this project.  We merely want to demonstrate feasibility.
 
 ### 3.1 Model Architecture
-Our goal was to explore architectures that could learn a vessel's position from an arbitrary image of the sky with the azimuth and elevation fixed and the time known.  We explored both DNNs and CNNs but settled on the latter because CNNs can encode usable predictions more efficently relative to deep dense networks.
+Our goal was to explore architectures that could learn a vessel's position from an arbitrary image of the sky with the azimuth and elevation fixed and the time known.  We explored both DNNs and CNNs but settled on the latter because CNNs can encode usable predictions more efficiently relative to deep dense networks.
 
-There are a number of ways to attack this problem.  Object detection could, for instance, be used to find the location of certain known celestial bodies in an image.  We chose to cast our research as a deep regression problem.  The literature suggests that convolutional neural networks have been applied to problems of head position detection [[15]](#15).  This is a similar problem to ours in the sense that we are trying to find a mapping between translations and rotations of elements of the sky and the position of the observer at a given time.  Our problem is different, however, in that the sky does not translate and rotate as a unitary whole.  The path of the moon and planets, for instance, is not fixed relative to that of the stars.  Stars do move together, however, on what is referred to simplisticly as the _celestial sphere_ [[16]](#16).
+There are a number of ways to attack this problem.  Object detection could, for instance, be used to find the location of certain known celestial bodies in an image.  We chose to cast our research as a deep regression problem.  The literature suggests that convolutional neural networks have been applied to problems of head position detection [[15]](#15).  This is a similar problem to ours in the sense that we are trying to find a mapping between translations and rotations of elements of the sky and the position of the observer at a given time.  Our problem is different, however, in that the sky does not translate and rotate as a unitary whole.  The path of the moon and planets, for instance, is not fixed relative to that of the stars.  Stars do move together, however, on what is referred to simplistically as the _celestial sphere_ [[16]](#16).
 
 Our network has two inputs.  The image input ingests pictures of the sky  the time input ingests the UTC time at which the image was taken.  The images are run through a series of convolutional and max pooling layers.  The results are concatenated with the normalized time and the resulting vector is put through dropout regularization, a dense hidden layer, and the regression head.  The head consists of two neurons, one each for normalized latitude and normalized longitude.  Latitude and longitude are normalized over the test area with the latitude of the southernmost bound mapping to 0 and the latitude of the northernmost bound mapping to 1.  Longitude is mapped similarly.  The output layer uses sigmoid activation to bound the output in the spatial domain on `([0,1], [0,1])`.
 
 [![](https://mermaid.ink/img/eyJjb2RlIjoiZ3JhcGggVERcbiAgQVtJbWFnZSBJbnB1dF0gLS0-fE5vbmUsIDIyNCwgMjI0LCAxfCBCW0NvbnYyRCAtIDUgZmlsdGVycywgayA9IDEwXVxuICBCIC0tPnxOb25lLCAyMjQsIDIyNCwgMXwgQ1tGbGF0dGVuXVxuICBDIC0tPnxOb25lLCA1MDE3NnwgRFtDb25jYXRlbmF0ZV1cbiAgRCAtLT58Tm9uZSwgNTAxNzd8IEVbRGVuc2Ugdy9SZUx1IC0gMjU2XVxuICBFIC0tPnxOb25lLCAyNTZ8IEZbRHJvcG91dCAtIDAuMl1cbiAgRiAtLT58Tm9uZSwgMjU2fCBHW0RlbnNlIHcvU2lnbW9pZCAtIDJdXG4gIEhbVGltZSBJbnB1dF0gLS0-fE5vbmUsIHwgSVtGbGF0dGVuXVxuICBJIC0tPnxOb25lLCAxfCBEXG5cdFx0IiwibWVybWFpZCI6eyJ0aGVtZSI6Im5ldXRyYWwifSwidXBkYXRlRWRpdG9yIjpmYWxzZX0)](https://mermaid-js.github.io/mermaid-live-editor/#/edit/eyJjb2RlIjoiZ3JhcGggVERcbiAgQVtJbWFnZSBJbnB1dF0gLS0-fE5vbmUsIDIyNCwgMjI0LCAxfCBCW0NvbnYyRCAtIDUgZmlsdGVycywgayA9IDEwXVxuICBCIC0tPnxOb25lLCAyMjQsIDIyNCwgMXwgQ1tGbGF0dGVuXVxuICBDIC0tPnxOb25lLCA1MDE3NnwgRFtDb25jYXRlbmF0ZV1cbiAgRCAtLT58Tm9uZSwgNTAxNzd8IEVbRGVuc2Ugdy9SZUx1IC0gMjU2XVxuICBFIC0tPnxOb25lLCAyNTZ8IEZbRHJvcG91dCAtIDAuMl1cbiAgRiAtLT58Tm9uZSwgMjU2fCBHW0RlbnNlIHcvU2lnbW9pZCAtIDJdXG4gIEhbVGltZSBJbnB1dF0gLS0-fE5vbmUsIHwgSVtGbGF0dGVuXVxuICBJIC0tPnxOb25lLCAxfCBEXG5cdFx0IiwibWVybWFpZCI6eyJ0aGVtZSI6Im5ldXRyYWwifSwidXBkYXRlRWRpdG9yIjpmYWxzZX0)
 
-### 3.2 Introducing the Haversine Loss Function
+### 3.2 Implementing a Haversine Loss Function
 We want our loss function to minimize the navigational error returned by the model.  We initially used mean squared error across latitude and longitude as our loss function, but we found that convergence was slow and that the model frequently failed to converge to reasonable values.  There is, of course a nonlinear relationship between latitude and longitude.  Whereas a degree of latitude is consistently 60 nautical miles anywhere on the globe, lines of longitude converge at the poles and diverge at the equator.  Using mean squared error, then, results in inconsistent results in terms of the model's error in distance.  To correct this, we implemented a new loss function in TensorFlow based on the haversine formula which gives the great circle distance between two points defined by latitude and longitude [[8]](#8).
 
-The haversine function is given below.  The value of interest, _d_, is the distance between two points defined by lattitude longitude pairs [_Φ_<sub>1</sub>, _λ_<sub>1</sub>] and [_Φ_<sub>2</sub>, _λ_<sub>2</sub>].  The value _r_ is the radius of the Earth and sets the units.  We chose our _r_ to provide an output in nautical miles.
+The haversine function is given below.  The value of interest, _d_, is the distance between two points defined by latitude longitude pairs [_φ_<sub>1</sub>, _λ_<sub>1</sub>] and [_φ_<sub>2</sub>, _λ_<sub>2</sub>].  The value _r_ is the radius of the Earth and sets the units.  We chose our _r_ to provide an output in nautical miles.
 
 ![System diagram](https://github.com/travisrmetz/w251-project/blob/master/report_images/haversine.png)
 
@@ -87,13 +89,13 @@ The haversine function is strictly positive and is continuously differentiable i
 *[Return to contents](#Contents)*
 
 ## <a id="Imgen">4.0 Generating Synthetic Images
-We must rely on synthetic images to train the model because we cannot otherwise capture future configurations of the sky.  We adapted the open source astronomy program _Stellarium_ for use in the cloud as an image generator.  In this section we will detail our method for adpating Stellarium and will provide details for running the image generator in the cloud with images being stored in an S3 bucket.
+We must rely on synthetic images to train the model because we cannot otherwise capture future configurations of the sky.  We adapted the open source astronomy program _Stellarium_ for use in the cloud as an image generator.  In this section we will detail our method for adapting Stellarium and will provide details for running the image generator in the cloud with images being stored in an S3 bucket.
  
  ### 4.1 Stellarium Overview
-[Stellarium](https://stellarium.org) generates high-quality images of the sky for arbitrary geographic positions, times, azimuths (the heading of the virtual camera in true degrees), altitudes (the angular elevation of the virtual camera), camera field of view, and observer elevations [[10]](#10).  Stellarium's functionality is aimed at practitioners and hobbiests, it has been in continual development since 2006.  In addition to rendering celestial bodies, Stellarium can render satellites, meteor showers, and other astronomical events.  The program uses a JavaScript-based scripting language system to automate sequences of observations.
+[Stellarium](https://stellarium.org) generates high-quality images of the sky for arbitrary geographic positions, times, azimuths (the heading of the virtual camera in true degrees), altitudes (the angular elevation of the virtual camera), camera field of view, and observer elevations [[10]](#10).  Stellarium's functionality is aimed at practitioners and hobbyists, it has been in continual development since 2006.  In addition to rendering celestial bodies, Stellarium can render satellites, meteor showers, and other astronomical events.  The program uses a JavaScript-based scripting language system to automate sequences of observations.
 
 ### 4.2 Containerizing Stellarium
-Stellarium is designed for desktop operation.  Our Docker contianer allows the program to be run on a headless server in the cloud.  The basic container operation is outlined in the figure below.  A python script reads input from a YAML file and generates and outputs an SSC script that automates image generation.  Stellarium runs using a customized configuration file that prevents certain modules from running.  Stellarium executes the SSC script.  The image files are saved either to local storage on the host or to an S3 mountpoint that the container accesses on the host system.  From there, the images can be preprocessed using the Docker container discussed in section 5.1 below.
+Stellarium is designed for desktop operation.  Our Docker container allows the program to be run on a headless server in the cloud.  The basic container operation is outlined in the figure below.  A python script reads input from a YAML file and generates and outputs an SSC script that automates image generation.  Stellarium runs using a customized configuration file that prevents certain modules from running.  Stellarium executes the SSC script.  The image files are saved either to local storage on the host or to an S3 mount point that the container accesses on the host system.  From there, the images can be preprocessed using the Docker container discussed in section 5.1 below.
 
 [![](https://mermaid.ink/img/eyJjb2RlIjoiZ3JhcGggVERcbiAgQVtZQU1MIEZpbGVdIC0tZnJvbSBob3N0LS0-IEIoU1NDIEdlbmVyYXRvciAtIFB5dGhvbilcbiAgQiAtLT4gQyhTdGVsbGFyaXVtKVxuICBDIC0tPiBEKFh2ZmIpXG4gIEQgLS1zY3JlZW4gY2FwdHVyZS0tPiBDXG4gIEMgLS10byBob3N0LS0-IEVbUzMgQnVja2V0XVxuICBDIC0tdG8gaG9zdC0tPiBGW0xvY2FsIFN0b3JhZ2VdXG4gIEYgLS1mcm9tIGhvc3QtLT4gRyhQcmVwcm9jZXNzb3IgLSBOdW1weSBvdXRwdXQpXG4gIEcgLS10byBob3N0LS0-IEVcbiAgRyAtLXRvIGhvc3QtLT4gRlxuXG5cdFx0IiwibWVybWFpZCI6eyJ0aGVtZSI6Im5ldXRyYWwifSwidXBkYXRlRWRpdG9yIjpmYWxzZX0)](https://mermaid-js.github.io/mermaid-live-editor/#/edit/eyJjb2RlIjoiZ3JhcGggVERcbiAgQVtZQU1MIEZpbGVdIC0tZnJvbSBob3N0LS0-IEIoU1NDIEdlbmVyYXRvciAtIFB5dGhvbilcbiAgQiAtLT4gQyhTdGVsbGFyaXVtKVxuICBDIC0tPiBEKFh2ZmIpXG4gIEQgLS1zY3JlZW4gY2FwdHVyZS0tPiBDXG4gIEMgLS10byBob3N0LS0-IEVbUzMgQnVja2V0XVxuICBDIC0tdG8gaG9zdC0tPiBGW0xvY2FsIFN0b3JhZ2VdXG4gIEYgLS1mcm9tIGhvc3QtLT4gRyhQcmVwcm9jZXNzb3IgLSBOdW1weSBvdXRwdXQpXG4gIEcgLS10byBob3N0LS0-IEVcbiAgRyAtLXRvIGhvc3QtLT4gRlxuXG5cdFx0IiwibWVybWFpZCI6eyJ0aGVtZSI6Im5ldXRyYWwifSwidXBkYXRlRWRpdG9yIjpmYWxzZX0)
 
@@ -117,7 +119,7 @@ We use the [ktrain](https://towardsdatascience.com/ktrain-a-lightweight-wrapper-
 
 The container saves models in the `.h5` format to a user-specified directory that maps to the host.  In this way, the model can be saved either locally or to object storage.
 
-We established a experimental space from 36N to 40N, from 074W to 078W, and from 2020-05-25T22:00:00 to 2020-05-26T02:00:00.  We trained the model using 6,788 images reduced to single channel 224 x 224.  We validated on 715 images similarly reduced in color and resolution.  The base images were of different aspect ratios.  The training routine uses a batch size of 32.  The figure below details the application of the triangular learning rate policy.
+We established an experimental space from 36°N to 40°N, from 074°W to 078°W, and from 2020-05-25T22:00:00 UTC to 2020-05-26T02:00:00 UTC.  We trained the model using 6,788 images reduced to single channel 224 x 224.  We validated on 715 images similarly reduced in color and resolution.  The base images were of different aspect ratios.  The training routine uses a batch size of 32.  The figure below details the application of the triangular learning rate policy.
 
 ![System diagram](https://github.com/travisrmetz/w251-project/blob/master/report_images/lr_policy.png)
 
@@ -125,18 +127,31 @@ Training loss converged to approximately 5.5 nautical miles and validation loss 
 
 ![System diagram](https://github.com/travisrmetz/w251-project/blob/master/report_images/train_val_loss.png)
 
-*[Return to contents](#Contents)*
-
-## 5.3 Performance on a Notional Vessel Transit
+### 5.3 Performance on a Notional Vessel Transit
 We consider a four-hour period in the test area defined above.  A notional vessel is in position TODO on a course of 208° true—that is, referenced to true north—at a speed of 12 nautical miles per hour or _knots_.  A nautical mile is slightly longer than a statute mile.  The vessel employs our system to fix its position hourly beginning at 22:00 UTC.  The chart below is overlaid with the vessel's actual positions in blue and predicted positions in red.
 
 ![Notional transit](https://github.com/travisrmetz/w251-project/blob/master/report_images/chart_12200.png)
 
-## 4.0 Experimental Results
+Our model is trained using a spatial-temporal grid based on our intuition that the model is learning an interpolation and should, therefore, be trained on data spaced at regular intervals.  Spatial interpolation was generally quite good.  Temporal interpolation was more challenging, likely owing to our decision to limit the temporal density to 20-minute intervals during training.  Mariners typically take fixes at regular intervals on the hour, half hour, quarter hour, etc..., and our fix interval for the example above aligns with times trained on the temporal grid.  We leave improving temporal interpolation as an area for further study.
 
+*[Return to contents](#Contents)*
 
-### 4.1 Test Area
-We bounded the test area both spatially and temporally in order to keep the problem tractable.  our test area exists from TODO
+## <a id="Edge"> 6.0 Inferencing at the Edge
+
+### 6.1 The Camera Container and Broker
+The edge implementation consists of three Docker containers connected via the MQTT protocol.  The camera capture container as intended will simply take an image and forward it via the MQTT broker to the TensorFlow-powered inference container.  Since we are using synthetic images, our current implementation of the camera container takes an image from a directory of images and forwards it for inferencing.  The camera container displays images as they are loaded to assist in troubleshooting.
+
+The MQTT broker sits between the camera container and the inference container and acts as a bridge to pass images.
+
+[_Installing and running the camera and broker containers_](https://github.com/travisrmetz/w251-project/tree/master/training/edge_network)
+
+### 6.2 Inference Container
+
+The inference container runs the TensorFlow mode that was trained in the cloud.  On receipt of an image, the container preprocesses the image, feeds the processed image forward through the network and displays the output as text.  The container can run arbitrary TensorFlow models that are saved in the  older `.h5` format.
+
+[_Installing and running the inference container_](https://github.com/travisrmetz/w251-project/tree/master/training/inference)
+
+*[Return to contents](#Contents)*
 
 ## An End-to-End Example
 
