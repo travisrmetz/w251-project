@@ -217,7 +217,6 @@ docker run --name preproc -dit -v /data/image_train_val:/data/image_train_val -v
 Once the preprocessing is complete and you have verified that the `.npy` files are where you expect, tear down the container.
 
 ```
-docker stop preproc
 docker rm preproc
 ```
 
