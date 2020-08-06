@@ -153,11 +153,11 @@ The inference container runs the TensorFlow mode that was trained in the cloud. 
 
 *[Return to contents](#Contents)*
 
-## An End-to-End Example
+## 7.0 An End-to-End Example
 
 This section walks through a detailed example of generating synthetic data, training a model in the cloud, pushing that model to an object store, pulling the model to the edge device, capturing an image locally, and making an inference based on that image.
 
-### Generate images
+### 7.1 Generate Images
 We begin by provisioning a virtual server on a cloud provider.  Rather to storing to object storage, we will store the images locally to train the model on the same virtual server.  We create a local directory to hold the images.  We then clone the repo and `cd` into the `image_generator` directory.
 
 ```
@@ -194,7 +194,7 @@ done
 
 Edit the `ssc_gen.yml` file to change the target directory to `/data/image_test` and build 1,000 test images.
 
-### Preprocessing the images
+### 7.2 Preprocessing the Images
 We will preprocess the image files in place in preparation for training.  To do this, `cd` to the preprocessor directory and build the dockerfile.
 
 ```
@@ -219,6 +219,29 @@ Once the preprocessing is complete and you have verified that the `.npy` files a
 ```
 docker rm preproc
 ```
+
+### 7.3 Training the Model
+
+Build the docker image.
+
+```
+cd /root/w251-project/training
+docker build -t training -f training.dockerfile .
+```
+
+Create a directory to house models.
+
+```
+mkdir /data/models
+```
+
+Spin up the container and train a model.
+
+```
+nvidia-docker run -dit --name train -v /data/sets:/data/sets -v/data/models:/data/models tensorflow/tensorflow:latest-gpu-jupyter python3 /training.py
+```
+
+You should now see your trained model in `data/models` on the host machine.
 
 
 ## References
