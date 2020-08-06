@@ -136,7 +136,7 @@ Our model is trained using a spatial-temporal grid based on our intuition that t
 
 *[Return to contents](#Contents)*
 
-## <a id="Edge"> 6.0 Inferencing at the Edge
+## <a id="Edge">6.0 Inferencing at the Edge
 
 ### 6.1 The Camera Container and Broker
 The edge implementation consists of three Docker containers connected via the MQTT protocol.  The camera capture container as intended will simply take an image and forward it via the MQTT broker to the TensorFlow-powered inference container.  Since we are using synthetic images, our current implementation of the camera container takes an image from a directory of images and forwards it for inferencing.  The camera container displays images as they are loaded to assist in troubleshooting.
