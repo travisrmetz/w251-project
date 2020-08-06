@@ -16,7 +16,8 @@ RUN apt-get update && \
                 apt install ./nvidia-machine-learning-repo-ubuntu1804_1.0.0-1_amd64.deb && \
                 apt-get update && \
                 apt-get install -y --no-install-recommends nvidia-driver-430 && \
-                pip3 install ktrain
+                pip3 install ktrain && \
+                pip3 install pandas
 
 ADD training.py /
 ADD training.yml /
