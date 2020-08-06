@@ -143,13 +143,13 @@ The edge implementation consists of three Docker containers connected via the MQ
 
 The MQTT broker sits between the camera container and the inference container and acts as a bridge to pass images.
 
-[_Installing and running the camera and broker containers_](https://github.com/travisrmetz/w251-project/tree/master/training/edge_network)
+[_Installing and running the camera and broker containers_](https://github.com/travisrmetz/w251-project/tree/master/inference/edge_network)
 
 ### 6.2 Inference Container
 
 The inference container runs the TensorFlow mode that was trained in the cloud.  On receipt of an image, the container preprocesses the image, feeds the processed image forward through the network and displays the output as text.  The container can run arbitrary TensorFlow models that are saved in the  older `.h5` format.
 
-[_Installing and running the inference container_](https://github.com/travisrmetz/w251-project/tree/master/training/inference)
+[_Installing and running the inference container_](https://github.com/travisrmetz/w251-project/tree/master/inference)
 
 *[Return to contents](#Contents)*
 
