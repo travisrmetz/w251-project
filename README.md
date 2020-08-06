@@ -139,15 +139,18 @@ Our model is trained using a spatial-temporal grid based on our intuition that t
 ## <a id="Edge">6.0 Inferencing at the Edge
 
 ### 6.1 The Camera Container and Broker
-The edge implementation consists of three Docker containers connected via the MQTT protocol.  The camera capture container as intended will simply take an image and forward it via the MQTT broker to the TensorFlow-powered inference container.  Since we are using synthetic images, our current implementation of the camera container takes an image from a directory of images and forwards it for inferencing.  The camera container displays images as they are loaded to assist in troubleshooting.
 
-The MQTT broker sits between the camera container and the inference container and acts as a bridge to pass images.
+The edge implementation consists of three Docker containers on a Jetson connected via the MQTT protocol.  The camera container 'creates' an image (in this case synthetically) and forwards it via the MQTT broker to the TensorFlow-powered inference container.  Since we are using synthetic images, our current implementation of the camera container takes an image from a directory of images and forwards it for inferencing.  The camera container displays images as they are loaded to assist in troubleshooting.
+
+The camera container does much of the image preprocessing (primarily reducing any image to 224x224 and converting it to black and white).  We do this at the level of the camera to reduce the size of the messages being passed through the MQTT protocol, thus making the message network more reliable.
+
+The MQTT broker sits between the camera container and the inference container and acts as a bridge to pass images (and the file name which has the ground truth embedded it and is used for assessing prediction accuracy).
 
 [_Installing and running the camera and broker containers_](https://github.com/travisrmetz/w251-project/tree/master/inference/edge_network)
 
 ### 6.2 Inference Container
 
-The inference container runs the TensorFlow mode that was trained in the cloud.  On receipt of an image, the container preprocesses the image, feeds the processed image forward through the network and displays the output as text.  The container can run arbitrary TensorFlow models that are saved in the  older `.h5` format.
+The inference container runs the TensorFlow model that was trained in the cloud.  We found transferring models using the older `.h5` format to be more reliable than more current Keras methods.  On receipt of an image, the container further preprocesses the image, feeds the processed image forward through the network and displays the output as text.  We also provide a measure of accuracy (using the ground truth which is embedded in the file names passed through).
 
 [_Installing and running the inference container_](https://github.com/travisrmetz/w251-project/tree/master/inference)
 
