@@ -2,20 +2,47 @@
 ## W251 - Final Project - Tozzi/Metz - Summer 2020
 ### Setting up Containers on a Virtual Server for Image Generation
 
-This section has files for setting up container on Jetson that will subscribe to a MQTT broker and 'listen' for images being published by the 'camera' container (described in /inference/edge_network).  Upon receiving the images, it uses the trained model to predict latitude and longitude.  The camera container also sends the name of the file, which has the time the synthetic picture was generated (which is an input to model along with the image) and the true latitude and longitude, which is parsed to provide an evaluation of accuracy after a prediction is made.
+#### Files
+The `image_generator` directory contains the following files:
 
+`prepare_vs.sh` prepares the cloud server to save image files to an object store and builds the Dockerfile.
 
-#### Build Docker containers with TF2, CV2 etc
+`image_generator.dockerfile` builds the `imgen` image.
 
-Have to have credentials and config file for AWS in folder where Dockerfile is - copies them to container root.  This is for object store model.
+`get_skies.py` reads a YAML input file and generates an SSC that Stellarium executes.  The SSC is build from random locations sampled from the spatial-temporal grid defined in the YAML file.
 
-`sudo docker build -t inference-image -f Dockerfile.inference .`
+`get_skies.sh` and `get_skies_grid.py` are deprecated but is kept for reference.  This files contains code to generate images based on a spatial-temporal grid.
 
+`get_skies_helper.py` contains functions used by `get_skies.py`.
 
-#### Start inference container and run inference
+`screenshot.sh` runs the image generation routine from the docker container.
 
-```docker run --name inference --memory="8g" --memory-swap="16g" -v /tmp:/tmp -v /w251-project/inference/:/inference/ --network project --runtime nvidia --privileged -ti --rm -v /tmp/.X11-unix/:/tmp/.X11-unix:rw -e DISPLAY=$DISPLAY inference-image bash```
+`default_cfg.ini` is a replacement for Stellarium's configuration file.  This turns off several modules that slow the image generation process.
 
-Run inference from within container: `bash inference.sh` (this also runs Jetson clocks and does some buffer work to try and optimize for memory and performance)
+`ssc_gen.yml` is a sample input file.
 
+#### Installing and Running the Image Generator
+>Note:  The image generator must be run on a server with a GPU.  We assume that the virtual server is running Ubuntu 18.04 and is already provisioned with Docker and s3fs.
 
+>Note:  The output of the image generator need not be placed in an object store.  The steps below can be adapted to direct the images to local storage.
+
+- After pulling the repository on the virtual server, create a credentials file with `vi credentials` to allow access to object storage.  The credentials file should contain a single line with `<api_key>:<secret>`.
+
+- Next edit the `prepare_vs.sh` script such that it contains the user's object store information, and run script to build the image generator Docker image and link the mountpoint to the appropriate S3 bucket.
+
+```
+chmod +x prepare_vs.sh
+./prepare_vs.sh
+```
+
+- Verify that the `imgen` image is built by calling `docker images`.
+
+- Edit the `ssc_gen.yml` file to configure the maximum and minimum latitudes, longitudes, and times that will be rendered.
+
+- Create an `imgen` container instance with access to the host's mountpoint. `docker run --name <name> -dit -v /<mountpoint>:/<mountpoint> imgen`
+
+- Copy the YAML file to the container.  `docker cp ssc_gen.yml <name>:/`
+
+- Run the image generator and monitor progress.  `docker exec <name> ./screenshot.sh`
+
+The steps above can be automated further as needed.  Multiple instances of the image generator container can be run on the same server to speed the process.
