@@ -208,11 +208,10 @@ We will make a new directory to store our processed Numpy arrays.
 mkdir /data/sets
 ```
 
-Edit the `preprocessor.yml` file as necessary, spin up a container, and preprocess using the following commands.
+Edit the `preprocessor.yml` file as necessary, spin up a container, and preprocess the images.
 
 ```
-docker run --name preproc -dit -v /data/image_train_val:/data/image_train_val -v /data/image_test:/data/image_test -v /data/sets:/data/sets preprocessor
-docker exec -d preproc python3 preprocessor.py
+docker run --name preproc -dit -v /data/image_train_val:/data/image_train_val -v /data/image_test:/data/image_test -v /data/sets:/data/sets preprocessor python3 preprocessor.py
 ```
 
 Once the preprocessing is complete and you have verified that the `.npy` files are where you expect, tear down the container.
