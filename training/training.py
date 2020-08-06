@@ -140,6 +140,6 @@ def main():
     learner.model.save(model_path)
     
     # Evaluate
-    y_hat = learner.model.predict([x_test, t_test])
+    y_hat = learner.model.predict([np.expand_dims(x_test, 3), t_test])
     print('\n-----------------Test set performance-----------------------------')
-    print(haversine_loss(y_test, y_hat))
+    print(haversine_loss(y_test, y_hat.astype('double')).numpy())
