@@ -152,6 +152,10 @@ The MQTT broker sits between the camera container and the inference container an
 
 The inference container runs the TensorFlow model that was trained in the cloud.  We found transferring models using the older `.h5` format to be more reliable than more current Keras methods.  On receipt of an image, the container further preprocesses the image, feeds the processed image forward through the network and displays the output as text.  We also provide a measure of accuracy (using the ground truth which is embedded in the file names passed through).
 
+The screenshot below shows the edge device at work.  In the lower right you have the camera container.  In the lower left you have the test image it generated (after preprocessing).  In the upper left is the broker that provides communication to the inference engine.  And in the upper right is the inference container with readouts from two different prediction requests sent to it by the camera container.
+
+![Camera, broker and inference engine at work](https://github.com/travisrmetz/w251-project/blob/master/report_images/screenshot_of_inference.png)
+
 [_Installing and running the inference container_](https://github.com/travisrmetz/w251-project/tree/master/inference)
 
 *[Return to contents](#Contents)*
