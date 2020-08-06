@@ -17,6 +17,8 @@
 
 [6.0 Inferencing at the Edge](#Edge)
 
+[7.0 An End-to-End Example](#End)
+
 
 
 ## <a id="Introduction">1.0 Introduction
@@ -32,7 +34,7 @@ In current practice, marine celestial navigation requires:
 - A _dead reckoning_ plot on which the navigator estimates the ship's track.
 - For manual computation, a number of volumes containing published tables.
 
-An automated hybrid inertial-celestial navigation system for aircraft, referred to as _astroinertial_ navigation, exists aboard high-end military aircraft and missile systems.  These systems rely on catalogs of stars and an estimated position developed through integration of accelerometer data [[x]](#x).
+An automated hybrid inertial-celestial navigation system for aircraft, referred to as _astroinertial_ navigation, exists aboard high-end military aircraft and missile systems.  These systems rely on catalogs of stars and an estimated position developed through integration of accelerometer data [[7]](#7).
 
 ### 1.2 Intent of this Project
 We want to explore the possibility of applying deep learning to the task of automating celestial  navigation.  We entered this project wanting to answer the following questions:
@@ -71,7 +73,7 @@ Our model is a relatively simple CNN tuned to provide reasonably accurate predic
 ### 3.1 Model Architecture
 Our goal was to explore architectures that could learn a vessel's position from an arbitrary image of the sky with the azimuth and elevation fixed and the time known.  We explored both DNNs and CNNs but settled on the latter because CNNs can encode usable predictions more efficiently relative to deep dense networks.
 
-There are a number of ways to attack this problem.  Object detection could, for instance, be used to find the location of certain known celestial bodies in an image.  We chose to cast our research as a deep regression problem.  The literature suggests that convolutional neural networks have been applied to problems of head position detection [[15]](#15).  This is a similar problem to ours in the sense that we are trying to find a mapping between translations and rotations of elements of the sky and the position of the observer at a given time.  Our problem is different, however, in that the sky does not translate and rotate as a unitary whole.  The path of the moon and planets, for instance, is not fixed relative to that of the stars.  Stars do move together, however, on what is referred to simplistically as the _celestial sphere_ [[16]](#16).
+There are a number of ways to attack this problem.  Object detection could, for instance, be used to find the location of certain known celestial bodies in an image.  We chose to cast our research as a deep regression problem.  The literature suggests that convolutional neural networks have been applied to problems of head position detection [[8]](#8).  This is a similar problem to ours in the sense that we are trying to find a mapping between translations and rotations of elements of the sky and the position of the observer at a given time.  Our problem is different, however, in that the sky does not translate and rotate as a unitary whole.  The path of the moon and planets, for instance, is not fixed relative to that of the stars.  Stars do move together, however, on what is referred to simplistically as the _celestial sphere_ [[16]](#16).
 
 Our network has two inputs.  The image input ingests pictures of the sky  the time input ingests the UTC time at which the image was taken.  The images are run through a series of convolutional and max pooling layers.  The results are concatenated with the normalized time and the resulting vector is put through dropout regularization, a dense hidden layer, and the regression head.  The head consists of two neurons, one each for normalized latitude and normalized longitude.  Latitude and longitude are normalized over the test area with the latitude of the southernmost bound mapping to 0 and the latitude of the northernmost bound mapping to 1.  Longitude is mapped similarly.  The output layer uses sigmoid activation to bound the output in the spatial domain on `([0,1], [0,1])`.
 
@@ -160,7 +162,7 @@ The screenshot below shows the edge device at work.  In the lower right you have
 
 *[Return to contents](#Contents)*
 
-## 7.0 An End-to-End Example
+## <a id="End">7.0 An End-to-End Example
 
 This section walks through a detailed example of generating synthetic data, training a model in the cloud, pushing that model to an object store, pulling the model to the edge device, capturing an image locally, and making an inference based on that image.
 
@@ -250,6 +252,7 @@ nvidia-docker run -dit --name train -v /data/sets:/data/sets -v/data/models:/dat
 
 You should now see your trained model in `data/models` on the host machine.
 
+*[Return to contents](#Contents)*
 
 ## References
 
@@ -264,6 +267,12 @@ You should now see your trained model in `data/models` on the host machine.
 <a id="5">[5]</a> U. S. Coast Guard Navigation Center, "Special Notice Regarding LORAN Closure", [https://www.navcen.uscg.gov/?pageName=loranMain](https://www.navcen.uscg.gov/?pageName=loranMain).
 
 <a id="6">[6]</a> T. Hitchens, "SASC Wants Alternative GPS By 2023," 29 June 2020, [breakingdefense.com/2020/06/sasc-wants-alternative-gps-by-2023/](breakingdefense.com/2020/06/sasc-wants-alternative-gps-by-2023/.).
+
+<a id="7">[7]</a> R. Whitman, "Astroinertial Navigation for Cruise Applications." Northrop Corporation, 1980.
+
+<a id="8">[8]</a> S. Lathuiliere, P. Mesejo, X. Alameda-Pineda and R. Horaud, "A Comprehensive Analysis of Deep Regression," [arXiv:1803.08450v2](https://arxiv.org/pdf/1803.08450.pdf), 2019.
+
+<a id="9">[9]</a> NATIONAL GEOSPATIAL-INTELLIGENCE AGENCY, _Pub No. 9, American Practical Navigator: an Epitome of Navigation_, 2017.
 
 <a id="7">[7]</a> M. Garvin, "Future of Celestial Navigation and the Ocean-Going Military Navigator," [OTS Master's Level Projects & Papers. 41](https://digitalcommons.odu.edu/ots_masters_projects/41), 2010.
 
@@ -280,12 +289,6 @@ You should now see your trained model in `data/models` on the host machine.
 <a id="13">[13]</a> A. Maiya, "ktrain: A Low-Code Library for Augmented Machine Learning," [arXiv:2004.10703](https://arxiv.org/abs/2004.10703), 2020.
 
 <a id="14">[14]</a> L. Smith, "Cyclical Learning Rates for Training Neural Networks," [arXiv:1506.01186v6](https://arxiv.org/abs/1506.01186v6), 2017.
-
-<a id="15">[15]</a> S. Lathuiliere, P. Mesejo, X. Alameda-Pineda and R. Horaud, "A Comprehensive Analysis of Deep Regression," [arXiv:1803.08450v2](https://arxiv.org/pdf/1803.08450.pdf), 2019.
-
-<a id="16">[16]</a> NATIONAL GEOSPATIAL-INTELLIGENCE AGENCY, _Pub No. 9, American Practical Navigator: an Epitome of Navigation_, 2017.
-
-<a id="x">[x]</a> R. Whitman, "Astroinertial Navigation for Cruise Applications." Northrop Corporation, 1980.
 
 *[Return to contents](#Contents)*
 
