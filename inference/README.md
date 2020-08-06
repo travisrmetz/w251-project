@@ -1,4 +1,4 @@
-[_Return to the white paper_](https://github.com/travisrmetz/w251-project#Inference)
+[_Return to the white paper_](https://github.com/travisrmetz/w251-project#Edge)
 
 # Celestial Inference at the Edge
 ## W251 - Final Project - Tozzi/Metz - Summer 2020
