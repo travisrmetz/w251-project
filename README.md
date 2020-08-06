@@ -29,12 +29,13 @@ In current practice, marine celestial navigation requires:
 - A _dead reckoning_ plot on which the navigator estimates the ship's track.
 - For manual computation, a number of volumes containing published tables.
 
-Automated celestial navigation for aircraft was solved in the 
+An automated hybrid inertial-celestial navigation system for aircraft, referred to as _astroinertial_ navigation, exists aboard high-end military aircraft and missile systems.  These systems rely on catalogs of stars and a estimated position developed through integration of acceleromter data [[x]](#x).
 
 ### 1.2 Intent of this Project
 We want to explore the possibility of applying deep learning to the task of automating celestial  navigation.  We entered this project wanting to answer the following questions:
 
-- Can arbitrary images of the sky be used to fix a vessel's position?
+- Can we demonstrate the possiblity of a viable solution to marine celestial navigation by casting it as a deep regression problem?
+- What is the minimum amount of information that we need to provide such a system?  In particular, can we build a system that suggests—if it does not achieve—a viable solution that does not take an estimated positon, as is computed in an astroinertial system or as is estimated by mariners through dead reakoning, as input?
 
 *[Return to contents](#Contents)*
 
@@ -95,54 +96,8 @@ We must rely on synthetic images to train the model because we cannot otherwise 
 Stellarium is designed for desktop operation.  Our Docker contianer allows the program to be run on a headless server in the cloud.  The basic container operation is outlined in the figure below.  A python script reads input from a YAML file and generates and outputs an SSC script that automates image generation.  Stellarium runs using a customized configuration file that prevents certain modules from running.  Stellarium executes the SSC script.  The image files are saved either to local storage on the host or to an S3 mountpoint that the container accesses on the host system.  From there, the images can be preprocessed using the Docker container discussed in section 5.1 below.
 
 [![](https://mermaid.ink/img/eyJjb2RlIjoiZ3JhcGggVERcbiAgQVtZQU1MIEZpbGVdIC0tZnJvbSBob3N0LS0-IEIoU1NDIEdlbmVyYXRvciAtIFB5dGhvbilcbiAgQiAtLT4gQyhTdGVsbGFyaXVtKVxuICBDIC0tPiBEKFh2ZmIpXG4gIEQgLS1zY3JlZW4gY2FwdHVyZS0tPiBDXG4gIEMgLS10byBob3N0LS0-IEVbUzMgQnVja2V0XVxuICBDIC0tdG8gaG9zdC0tPiBGW0xvY2FsIFN0b3JhZ2VdXG4gIEYgLS1mcm9tIGhvc3QtLT4gRyhQcmVwcm9jZXNzb3IgLSBOdW1weSBvdXRwdXQpXG4gIEcgLS10byBob3N0LS0-IEVcbiAgRyAtLXRvIGhvc3QtLT4gRlxuXG5cdFx0IiwibWVybWFpZCI6eyJ0aGVtZSI6Im5ldXRyYWwifSwidXBkYXRlRWRpdG9yIjpmYWxzZX0)](https://mermaid-js.github.io/mermaid-live-editor/#/edit/eyJjb2RlIjoiZ3JhcGggVERcbiAgQVtZQU1MIEZpbGVdIC0tZnJvbSBob3N0LS0-IEIoU1NDIEdlbmVyYXRvciAtIFB5dGhvbilcbiAgQiAtLT4gQyhTdGVsbGFyaXVtKVxuICBDIC0tPiBEKFh2ZmIpXG4gIEQgLS1zY3JlZW4gY2FwdHVyZS0tPiBDXG4gIEMgLS10byBob3N0LS0-IEVbUzMgQnVja2V0XVxuICBDIC0tdG8gaG9zdC0tPiBGW0xvY2FsIFN0b3JhZ2VdXG4gIEYgLS1mcm9tIGhvc3QtLT4gRyhQcmVwcm9jZXNzb3IgLSBOdW1weSBvdXRwdXQpXG4gIEcgLS10byBob3N0LS0-IEVcbiAgRyAtLXRvIGhvc3QtLT4gRlxuXG5cdFx0IiwibWVybWFpZCI6eyJ0aGVtZSI6Im5ldXRyYWwifSwidXBkYXRlRWRpdG9yIjpmYWxzZX0)
-### 4.3 Installing the Image Generator
 
-#### 4.3.1 Files
-The `image_generator` directory contains the following files:
-
-`prepare_vs.sh` prepares the cloud server to save image files to an object store and builds the Dockerfile.
-
-`image_generator.dockerfile` builds the `imgen` image.
-
-`get_skies.py` reads a YAML input file and generates an SSC that Stellarium executes.  The SSC is build from random locations sampled from the spatial-temporal grid defined in the YAML file.
-
-`get_skies.sh` and `get_skies_grid.py` are deprecated but is kept for reference.  This files contains code to generate images based on a spatial-temporal grid.
-
-`get_skies_helper.py` contains functions used by `get_skies.py`.
-
-`screenshot.sh` runs the image generation routine from the docker container.
-
-`default_cfg.ini` is a replacement for Stellarium's configuration file.  This turns off several modules that slow the image generation process.
-
-`ssc_gen.yml` is a sample input file.
-
-*[Return to contents](#Contents)*
-
-#### 4.3.2 Installing and Running the Image Generator
->Note:  The image generator must be run on a server with a GPU.  We assume that the virtual server is running Ubuntu 18.04 and is already provisioned with Docker and s3fs.
-
->Note:  The output of the image generator need not be placed in an object store.  The steps below can be adapted to direct the images to local storage.
-
-- After pulling the repository on the virtual server, create a credentials file with `vi credentials` to allow access to object storage.  The credentials file should contain a single line with `<api_key>:<secret>`.
-
-- Next edit the `prepare_vs.sh` script such that it contains the user's object store information, and run script to build the image generator Docker image and link the mountpoint to the appropriate S3 bucket.
-
-```
-chmod +x prepare_vs.sh
-./prepare_vs.sh
-```
-
-- Verify that the `imgen` image is built by calling `docker images`.
-
-- Edit the `ssc_gen.yml` file to configure the maximum and minimum latitudes, longitudes, and times that will be rendered.
-
-- Create an `imgen` container instance with access to the host's mountpoint. `docker run --name <name> -dit -v /<mountpoint>:/<mountpoint> imgen`
-
-- Copy the YAML file to the container.  `docker cp ssc_gen.yml <name>:/`
-
-- Run the image generator and monitor progress.  `docker exec <name> ./screenshot.sh`
-
-The steps above can be automated further as needed.  Multiple instances of the image generator container can be run on the same server to speed the process.
+[_Installing and running the image generator_](https://github.com/travisrmetz/w251-project/tree/master/image_generator)
 
 *[Return to contents](#Contents)*
 
@@ -155,7 +110,7 @@ We provide a Docker container to handle the task of preprocessing images into Nu
 
 The data are broken into training and validation sets based on a user-provided split and random assignment.
 
-[_Preprocessor instructions_](https://github.com/travisrmetz/w251-project/tree/master/training/preprocessor)
+[_Installing and running the preprocessor_](https://github.com/travisrmetz/w251-project/tree/master/training/preprocessor)
 
 ### 5.2 Training
 We use the [ktrain](https://towardsdatascience.com/ktrain-a-lightweight-wrapper-for-keras-to-help-train-neural-networks-82851ba889c) package to train the models [[13]](#13).  The `tensorflow.keras.model` object is wrapped in a `ktrain.learner` object to simplify training and access ktrain's built in callbacks.  We train using the `ktrain.learner.autofit` function with an initial maximum learning rate of 2-4.  The training function applies the triangular learning rate policy with reduction in maximum learning rate when a plateau is encountered on the validation loss introduced by Smith [[14]](#14).
@@ -173,7 +128,7 @@ Training loss converged to approximately 5.5 nautical miles and validation loss 
 *[Return to contents](#Contents)*
 
 ## 5.3 Performance on a Notional Vessel Transit
-We consider a four-hour period in the test area defined above.  A notional vessel is in position TODO on a course of 208° true---that is, referenced to true north---at a speed of 12 nautical miles per hour or _knots_.  A nautical mile is slightly longer than a statute mile.  The vessel employs our system to fix its position hourly beginning at 22:00 UTC.  The chart below is overlaid with the vessel's actual positions in blue and predicted positions in red.
+We consider a four-hour period in the test area defined above.  A notional vessel is in position TODO on a course of 208° true—that is, referenced to true north—at a speed of 12 nautical miles per hour or _knots_.  A nautical mile is slightly longer than a statute mile.  The vessel employs our system to fix its position hourly beginning at 22:00 UTC.  The chart below is overlaid with the vessel's actual positions in blue and predicted positions in red.
 
 ![Notional transit](https://github.com/travisrmetz/w251-project/blob/master/report_images/chart_12200.png)
 
@@ -286,6 +241,8 @@ docker rm preproc
 <a id="15">[15]</a> S. Lathuiliere, P. Mesejo, X. Alameda-Pineda and R. Horaud, "A Comprehensive Analysis of Deep Regression," [arXiv:1803.08450v2](https://arxiv.org/pdf/1803.08450.pdf), 2019.
 
 <a id="16">[16]</a> NATIONAL GEOSPATIAL-INTELLIGENCE AGENCY, _Pub No. 9, American Practical Navigator: an Epitome of Navigation_, 2017.
+
+<a id="x">[x]</a> R. Whitman, "Astroinertial Navigation for Cruise Applications." Northrop Corporation, 1980.
 
 *[Return to contents](#Contents)*
 
