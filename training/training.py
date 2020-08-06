@@ -97,7 +97,7 @@ def haversine_loss(y_true, y_pred, denorm=(36.0, 4.0, -78.0, 4.0), R=3443.92):
     
 def main():
     # Parse the yaml file
-    with open('training.yml') as config_file:
+    with open('/training.yml') as config_file:
         config_data = yaml.load(config_file)
         set_path    = config_data['set_path']
         model_path  = config_data['model_path']
@@ -137,9 +137,14 @@ def main():
                                  val_data=([x_val, t_val], y_val))
     
     learner.autofit(lr)
-    learner.model.save(model_path)
+    learner.model.save(os.path.join(model_path, 'new_model.h5'))
     
     # Evaluate
-    y_hat = learner.model.predict([np.expand_dims(x_test, 3), t_test])
+    x_test = np.expand_dims(x_test, 3)
+    y_hat = learner.model.predict([x_test, t_test])
     print('\n-----------------Test set performance-----------------------------')
     print(haversine_loss(y_test, y_hat.astype('double')).numpy())
+
+
+if __name__ == '__main__':
+    main()

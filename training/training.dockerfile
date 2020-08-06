@@ -4,11 +4,9 @@ FROM tensorflow/tensorflow:latest-gpu-jupyter
 
 ARG DEBIAN_FRONTEND=noninteractive
 
-RUN apt-get update && \
-                apt -y upgrade && \
-                apt-get install -y python3-pip && \
-                pip3 install ktrain && \
-                pip3 install pandas
-
+RUN pip3 install ktrain && \
+    pip3 install pandas && \
+    pip3 install -q pyyaml h5py
+    
 ADD training.py /
 ADD training.yml /
