@@ -24,6 +24,9 @@ The model we used for the Jetson (with approximately 12m parameters) is [stored 
 
 Run inference from within container: `bash inference.sh` (this also runs Jetson clocks and does some buffer work to try and optimize for memory and performance)
 
+#### In action
+
+![Camera, broker and inference engine at work](https://github.com/travisrmetz/w251-project/blob/master/report_images/screenshot_of_inference.png)
 
 
 
