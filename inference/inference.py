@@ -55,6 +55,8 @@ def setup():
     with open('inference.yml') as config_file:
         config_data = yaml.load(config_file)
     
+    global model_dir
+    model_dir = config_data['image_dir']
     global image_dir
     image_dir = config_data['image_dir']
     global latstart 
@@ -76,13 +78,10 @@ def setup():
     #model=load_model_from_s3()
 
     #get model from local directory
-    #local_model_dir="/inference/small_model"
-    #local_model_path="/inference/model/one_night_model.h5"
-    local_model_path="/inference/model/model_for_travis.h5"
+    local_model_path=model_dir
     
     print ('Loading model', local_model_path)
     model=tf.keras.models.load_model(local_model_path,compile=False)
-    #print (model.summary())
     print('Compiling model')
     model.compile(loss=hs.haversine_loss)
     print (model.summary())

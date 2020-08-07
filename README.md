@@ -252,6 +252,14 @@ nvidia-docker run -dit --name train -v /data/sets:/data/sets -v/data/models:/dat
 
 You should now see your trained model in `data/models` on the host machine.
 
+### 7.4 Spooling up Edge Device for Images and Predictions
+
+[_Installing and running the camera and broker containers_](https://github.com/travisrmetz/w251-project/tree/master/inference/edge_network)
+
+[_Installing and running the inference container_](https://github.com/travisrmetz/w251-project/tree/master/inference)
+
+
+
 *[Return to contents](#Contents)*
 
 ## References

@@ -1,5 +1,6 @@
 # YAML file for automated test images
 ---
+model_dir: '/inference/model/model_for_travis.h5'
 image_dir: '/inference/test_images/images'
 latstart: 36
 latend: 40
