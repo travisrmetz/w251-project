@@ -24,7 +24,7 @@
 ## <a id="Introduction">1.0 Introduction
 
 ### 1.1 A _Very_ Brief Overview of Marine Navigation
-Navigation, along with seamanship and collision avoidance, is one of the mariner's fundamental skills.  Celestial methods were once the cornerstone of maritime and aeronautical navigation, but they have been almost entirely supplanted by electronic means -- first by terrestrially-based systems like OMEGA [[1]](#1) and LORAN [[2]](#2), then by satellite-based systems like GPS [[3]](#3), and then by mixed systems like differential GPS (DGPS) [[4]](#4).   Unfortunately, electronic navigation is fragile both to budgetary pressure and to malicious acts [[5]](#5)[[6]](#6).  Building and maintaining proficiency in celestial navigation is difficult, however, and a skilled navigator is still only able to fix a vessel's position a few times daily, weather permitting [[7]](#7).
+Navigation, along with seamanship and collision avoidance, is one of the mariner's fundamental skills.  Celestial methods were once the cornerstone of maritime and aeronautical navigation, but they have been almost entirely supplanted by electronic means—first by terrestrially-based systems like OMEGA [[1]](#1) and LORAN [[2]](#2), then by satellite-based systems like GPS [[3]](#3), and then by mixed systems like differential GPS (DGPS) [[4]](#4).   Unfortunately, electronic navigation is fragile both to budgetary pressure and to malicious acts [[5]](#5)[[6]](#6).  Building and maintaining proficiency in celestial navigation is difficult, however, and a skilled navigator is still only able to fix a vessel's position a few times daily, weather permitting [[7]](#7).
 
 In current practice, marine celestial navigation requires:
 
@@ -60,7 +60,7 @@ We made a number of engineering assumptions to make the problem tractable as a t
 
 
 ### 2.3 Components
-Our system consists of a cloud component and an edge component.  An image generator creates batches of synthetic images, names them using a descriptive scheme that allows easy indexing by location and time, and stores the models in object storage buckets indexed by location and time.  The model trainer pulls from these buckets to create models specific to a bounded geographic area at a given with certain time bounds.  These models are stored in object storage.  The edge device -- in this case a Jetson TX2 -- captures an image of the sky and the time at which the image was taken.  The inference engine performs a forward pass of the model, returning the vessel's predicted location as raw output.
+Our system consists of a cloud component and an edge component.  An image generator creates batches of synthetic images, names them using a descriptive scheme that allows easy indexing by location and time, and stores the models in object storage buckets indexed by location and time.  The model trainer pulls from these buckets to create models specific to a bounded geographic area at a given with certain time bounds.  These models are stored in object storage.  The edge device—in this case a Jetson TX2—captures an image of the sky and the time at which the image was taken.  The inference engine performs a forward pass of the model, returning the vessel's predicted location as raw output.
 
 ![System diagram](https://github.com/travisrmetz/w251-project/blob/master/report_images/system_diagram.png)
 
@@ -107,7 +107,7 @@ Stellarium is designed for desktop operation.  Our Docker container allows the p
 
 ## <a id="Train">5.0 Training the Model
 
-We built a Docker container to facilitate training in the cloud.  The container is built on the base TensorFlow container [[13]](#13) and facilitates deploying instances to allow simultaneous training of models representing different spatial-temporal regions.  Our model is written in TensorFlow and requires two inputs---one image and one floating point value identifying the time at which the image was generated.
+We built a Docker container to facilitate training in the cloud.  The container is built on the base TensorFlow container [[13]](#13) and facilitates deploying instances to allow simultaneous training of models representing different spatial-temporal regions.  Our model is written in TensorFlow and requires two inputs—one image and one floating point value identifying the time at which the image was generated.
 
 ### 5.1 Preprocessing
 We provide a Docker container to handle the task of preprocessing images into Numpy arrays ready to be used in training.  The container converts images into Numpy arrays with dimensions `(None, 224, 224, 1)`  with a script that leans heavily on [OpenCV](https://opencv.org) [[14]](#14).  Images are read from a single  directory.  The images are reduced to the the target resolution and are stacked in a single Numpy array.  Time and true position are parsed from the input file names which follow the format `<lat>+<long>+<YYYY>-<MM>-<DD>T<hh>:<mm>:<ss>.png`.  Date time groups are converted to `numpy.datetime64` and are normalized on `[0,1]` based on the temporal bounds on the training set.  Latitudes and longitudes are normalized on `[0,1]` based on the maximum extent of the geographic area under consideration and formed into an array with dimensions `(None, 2)`.
