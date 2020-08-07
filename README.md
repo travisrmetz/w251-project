@@ -129,6 +129,8 @@ Training loss converged to approximately 5.5 nautical miles and validation loss 
 
 ![System diagram](https://github.com/travisrmetz/w251-project/blob/master/report_images/train_val_loss.png)
 
+[_Installing and running the training container_](https://github.com/travisrmetz/w251-project/tree/master/training)
+
 ### 5.3 Performance on a Notional Vessel Transit
 We consider a four-hour period in the test area defined above.  A notional vessel is in position TODO on a course of 208° true—that is, referenced to true north—at a speed of 12 nautical miles per hour or _knots_.  A nautical mile is slightly longer than a statute mile.  The vessel employs our system to fix its position hourly beginning at 22:00 UTC.  The chart below is overlaid with the vessel's actual positions in blue and predicted positions in red.
 
