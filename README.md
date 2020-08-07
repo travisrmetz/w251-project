@@ -24,7 +24,7 @@
 ## <a id="Introduction">1.0 Introduction
 
 ### 1.1 A _Very_ Brief Overview of Marine Navigation
-Navigation, along with seamanship and collision avoidance, is one of the mariner's fundamental skills.  Celestial methods were once the cornerstone of maritime and aeronautical navigation, but they have been almost entirely supplanted by electronic means -- first by terrestrially-based systems like OMEGA [[1]](#1) and LORAN [[2]](#2), then by satellite-based systems like GPS [[3]](#3), and then by mixed systems like differential GPS (DGPS) [[4]](#4).   Unfortunately, electronic navigation is fragile both to budgetary pressure and to malicious acts [[5]](#5)[[6]](#6).  Building and maintaining proficiency in celestial navigation is difficult, however, and a skilled navigator is still only able to fix a vessel's position a few times daily, weather permitting.
+Navigation, along with seamanship and collision avoidance, is one of the mariner's fundamental skills.  Celestial methods were once the cornerstone of maritime and aeronautical navigation, but they have been almost entirely supplanted by electronic means -- first by terrestrially-based systems like OMEGA [[1]](#1) and LORAN [[2]](#2), then by satellite-based systems like GPS [[3]](#3), and then by mixed systems like differential GPS (DGPS) [[4]](#4).   Unfortunately, electronic navigation is fragile both to budgetary pressure and to malicious acts [[5]](#5)[[6]](#6).  Building and maintaining proficiency in celestial navigation is difficult, however, and a skilled navigator is still only able to fix a vessel's position a few times daily, weather permitting [[7]](#7).
 
 In current practice, marine celestial navigation requires:
 
@@ -34,7 +34,7 @@ In current practice, marine celestial navigation requires:
 - A _dead reckoning_ plot on which the navigator estimates the ship's track.
 - For manual computation, a number of volumes containing published tables.
 
-An automated hybrid inertial-celestial navigation system for aircraft, referred to as _astroinertial_ navigation, exists aboard high-end military aircraft and missile systems.  These systems rely on catalogs of stars and an estimated position developed through integration of accelerometer data [[7]](#7).
+An automated hybrid inertial-celestial navigation system for aircraft, referred to as _astroinertial_ navigation, exists aboard high-end military aircraft and missile systems.  These systems rely on catalogs of stars and an estimated position developed through integration of accelerometer data [[8]](#7).
 
 ### 1.2 Intent of this Project
 We want to explore the possibility of applying deep learning to the task of automating celestial  navigation.  We entered this project wanting to answer the following questions:
@@ -49,7 +49,7 @@ We want to explore the possibility of applying deep learning to the task of auto
 
 
 ### 2.1 Use Case
-We envision mariners using our system as a back-up to other forms of navigation, primarily for open-ocean navigation outside of five nautical miles from chartered hazards.  A navigator would depart on their voyage with a set of models suited for the vessel's track much in the same way as a navigator today loads relevant charts either from removable storage or the internet prior to departing on a voyage.  The system takes nothing more than the image returned from the edge device's installed camera and time from an accurate clock as input.  It returns both raw position output and an industry standard NMEA output suitable for integration with an electronic charting package.  A navigator with internet access at sea can load additional models from the cloud as needed to account for adjustments to the planned voyage.
+We envision mariners using our system as a back-up to other forms of navigation, primarily for open-ocean navigation outside of five nautical miles from chartered hazards.  A navigator would depart on their voyage with a set of models suited for the vessel's track much in the same way as a navigator today loads relevant charts either from removable storage or the internet prior to departing on a voyage.  The system takes nothing more than the image returned from the edge device's installed camera and time from an accurate clock as input.  In its final implementation, it will return both raw position output and an industry standard NMEA output suitable for integration with an electronic charting package.  A navigator with internet access at sea can load additional models from the cloud as needed to account for adjustments to the planned voyage.
 
 
 ### 2.2 Assumptions
@@ -60,7 +60,7 @@ We made a number of engineering assumptions to make the problem tractable as a t
 
 
 ### 2.3 Components
-Our system consists of a cloud component and an edge component.  An image generator creates batches of synthetic images, names them using a descriptive scheme that allows easy indexing by location and time, and stores the models in object storage buckets indexed by location and time.  The model trainer pulls from these buckets to create models specific to a bounded geographic area at a given with certain time bounds.  These models are stored in object storage.  The edge device -- in this case a Jetson TX2 -- captures an image of the sky and the time at which the image was taken.  The inference engine performs a forward pass of the model, returning the vessel's predicted location both as raw output and as a NMEA string.
+Our system consists of a cloud component and an edge component.  An image generator creates batches of synthetic images, names them using a descriptive scheme that allows easy indexing by location and time, and stores the models in object storage buckets indexed by location and time.  The model trainer pulls from these buckets to create models specific to a bounded geographic area at a given with certain time bounds.  These models are stored in object storage.  The edge device -- in this case a Jetson TX2 -- captures an image of the sky and the time at which the image was taken.  The inference engine performs a forward pass of the model, returning the vessel's predicted location as raw output.
 
 ![System diagram](https://github.com/travisrmetz/w251-project/blob/master/report_images/system_diagram.png)
 
@@ -73,14 +73,14 @@ Our model is a relatively simple CNN tuned to provide reasonably accurate predic
 ### 3.1 Model Architecture
 Our goal was to explore architectures that could learn a vessel's position from an arbitrary image of the sky with the azimuth and elevation fixed and the time known.  We explored both DNNs and CNNs but settled on the latter because CNNs can encode usable predictions more efficiently relative to deep dense networks.
 
-There are a number of ways to attack this problem.  Object detection could, for instance, be used to find the location of certain known celestial bodies in an image.  We chose to cast our research as a deep regression problem.  The literature suggests that convolutional neural networks have been applied to problems of head position detection [[8]](#8).  This is a similar problem to ours in the sense that we are trying to find a mapping between translations and rotations of elements of the sky and the position of the observer at a given time.  Our problem is different, however, in that the sky does not translate and rotate as a unitary whole.  The path of the moon and planets, for instance, is not fixed relative to that of the stars.  Stars do move together, however, on what is referred to simplistically as the _celestial sphere_ [[16]](#16).
+There are a number of ways to attack this problem.  Object detection could, for instance, be used to find the location of certain known celestial bodies in an image.  We chose to cast our research as a deep regression problem.  The literature suggests that convolutional neural networks have been applied to problems of head position detection [[9]](#9).  This is a similar problem to ours in the sense that we are trying to find a mapping between translations and rotations of elements of the sky and the position of the observer at a given time.  Our problem is different, however, in that the sky does not translate and rotate as a unitary whole.  The path of the moon and planets, for instance, is not fixed relative to that of the stars.  Stars do move together, however, on what is referred to simplistically as the _celestial sphere_ [[10]](#10).
 
 Our network has two inputs.  The image input ingests pictures of the sky  the time input ingests the UTC time at which the image was taken.  The images are run through a series of convolutional and max pooling layers.  The results are concatenated with the normalized time and the resulting vector is put through dropout regularization, a dense hidden layer, and the regression head.  The head consists of two neurons, one each for normalized latitude and normalized longitude.  Latitude and longitude are normalized over the test area with the latitude of the southernmost bound mapping to 0 and the latitude of the northernmost bound mapping to 1.  Longitude is mapped similarly.  The output layer uses sigmoid activation to bound the output in the spatial domain on `([0,1], [0,1])`.
 
 [![](https://mermaid.ink/img/eyJjb2RlIjoiZ3JhcGggVERcbiAgQVtJbWFnZSBJbnB1dF0gLS0-fE5vbmUsIDIyNCwgMjI0LCAxfCBCW0NvbnYyRCAtIDUgZmlsdGVycywgayA9IDEwXVxuICBCIC0tPnxOb25lLCAyMjQsIDIyNCwgMXwgQ1tGbGF0dGVuXVxuICBDIC0tPnxOb25lLCA1MDE3NnwgRFtDb25jYXRlbmF0ZV1cbiAgRCAtLT58Tm9uZSwgNTAxNzd8IEVbRGVuc2Ugdy9SZUx1IC0gMjU2XVxuICBFIC0tPnxOb25lLCAyNTZ8IEZbRHJvcG91dCAtIDAuMl1cbiAgRiAtLT58Tm9uZSwgMjU2fCBHW0RlbnNlIHcvU2lnbW9pZCAtIDJdXG4gIEhbVGltZSBJbnB1dF0gLS0-fE5vbmUsIHwgSVtGbGF0dGVuXVxuICBJIC0tPnxOb25lLCAxfCBEXG5cdFx0IiwibWVybWFpZCI6eyJ0aGVtZSI6Im5ldXRyYWwifSwidXBkYXRlRWRpdG9yIjpmYWxzZX0)](https://mermaid-js.github.io/mermaid-live-editor/#/edit/eyJjb2RlIjoiZ3JhcGggVERcbiAgQVtJbWFnZSBJbnB1dF0gLS0-fE5vbmUsIDIyNCwgMjI0LCAxfCBCW0NvbnYyRCAtIDUgZmlsdGVycywgayA9IDEwXVxuICBCIC0tPnxOb25lLCAyMjQsIDIyNCwgMXwgQ1tGbGF0dGVuXVxuICBDIC0tPnxOb25lLCA1MDE3NnwgRFtDb25jYXRlbmF0ZV1cbiAgRCAtLT58Tm9uZSwgNTAxNzd8IEVbRGVuc2Ugdy9SZUx1IC0gMjU2XVxuICBFIC0tPnxOb25lLCAyNTZ8IEZbRHJvcG91dCAtIDAuMl1cbiAgRiAtLT58Tm9uZSwgMjU2fCBHW0RlbnNlIHcvU2lnbW9pZCAtIDJdXG4gIEhbVGltZSBJbnB1dF0gLS0-fE5vbmUsIHwgSVtGbGF0dGVuXVxuICBJIC0tPnxOb25lLCAxfCBEXG5cdFx0IiwibWVybWFpZCI6eyJ0aGVtZSI6Im5ldXRyYWwifSwidXBkYXRlRWRpdG9yIjpmYWxzZX0)
 
 ### 3.2 Implementing a Haversine Loss Function
-We want our loss function to minimize the navigational error returned by the model.  We initially used mean squared error across latitude and longitude as our loss function, but we found that convergence was slow and that the model frequently failed to converge to reasonable values.  There is, of course a nonlinear relationship between latitude and longitude.  Whereas a degree of latitude is consistently 60 nautical miles anywhere on the globe, lines of longitude converge at the poles and diverge at the equator.  Using mean squared error, then, results in inconsistent results in terms of the model's error in distance.  To correct this, we implemented a new loss function in TensorFlow based on the haversine formula which gives the great circle distance between two points defined by latitude and longitude [[8]](#8).
+We want our loss function to minimize the navigational error returned by the model.  We initially used mean squared error across latitude and longitude as our loss function, but we found that convergence was slow and that the model frequently failed to converge to reasonable values.  There is, of course a nonlinear relationship between latitude and longitude.  Whereas a degree of latitude is consistently 60 nautical miles anywhere on the globe, lines of longitude converge at the poles and diverge at the equator.  Using mean squared error, then, results in inconsistent results in terms of the model's error in distance.  To correct this, we implemented a new loss function in TensorFlow based on the haversine formula which gives the great circle distance between two points defined by latitude and longitude [[11]](#11).
 
 The haversine function is given below.  The value of interest, _d_, is the distance between two points defined by latitude longitude pairs [_φ_<sub>1</sub>, _λ_<sub>1</sub>] and [_φ_<sub>2</sub>, _λ_<sub>2</sub>].  The value _r_ is the radius of the Earth and sets the units.  We chose our _r_ to provide an output in nautical miles.
 
@@ -94,7 +94,7 @@ The haversine function is strictly positive and is continuously differentiable i
 We must rely on synthetic images to train the model because we cannot otherwise capture future configurations of the sky.  We adapted the open source astronomy program _Stellarium_ for use in the cloud as an image generator.  In this section we will detail our method for adapting Stellarium and will provide details for running the image generator in the cloud with images being stored in an S3 bucket.
  
  ### 4.1 Stellarium Overview
-[Stellarium](https://stellarium.org) generates high-quality images of the sky for arbitrary geographic positions, times, azimuths (the heading of the virtual camera in true degrees), altitudes (the angular elevation of the virtual camera), camera field of view, and observer elevations [[10]](#10).  Stellarium's functionality is aimed at practitioners and hobbyists, it has been in continual development since 2006.  In addition to rendering celestial bodies, Stellarium can render satellites, meteor showers, and other astronomical events.  The program uses a JavaScript-based scripting language system to automate sequences of observations.
+[Stellarium](https://stellarium.org) generates high-quality images of the sky for arbitrary geographic positions, times, azimuths (the heading of the virtual camera in true degrees), altitudes (the angular elevation of the virtual camera), camera field of view, and observer elevations [[12]](#12).  Stellarium's functionality is aimed at practitioners and hobbyists, it has been in continual development since 2006.  In addition to rendering celestial bodies, Stellarium can render satellites, meteor showers, and other astronomical events.  The program uses a JavaScript-based scripting language system to automate sequences of observations.
 
 ### 4.2 Containerizing Stellarium
 Stellarium is designed for desktop operation.  Our Docker container allows the program to be run on a headless server in the cloud.  The basic container operation is outlined in the figure below.  A python script reads input from a YAML file and generates and outputs an SSC script that automates image generation.  Stellarium runs using a customized configuration file that prevents certain modules from running.  Stellarium executes the SSC script.  The image files are saved either to local storage on the host or to an S3 mount point that the container accesses on the host system.  From there, the images can be preprocessed using the Docker container discussed in section 5.1 below.
@@ -107,17 +107,17 @@ Stellarium is designed for desktop operation.  Our Docker container allows the p
 
 ## <a id="Train">5.0 Training the Model
 
-We built a Docker container to facilitate training in the cloud.  The container is built on the base TensorFlow container [[11]](#11) and facilitates deploying instances to allow simultaneous training of models representing different spatial-temporal regions.  Our model is written in TensorFlow and requires two inputs---one image and one floating point value identifying the time at which the image was generated.
+We built a Docker container to facilitate training in the cloud.  The container is built on the base TensorFlow container [[13]](#13) and facilitates deploying instances to allow simultaneous training of models representing different spatial-temporal regions.  Our model is written in TensorFlow and requires two inputs---one image and one floating point value identifying the time at which the image was generated.
 
 ### 5.1 Preprocessing
-We provide a Docker container to handle the task of preprocessing images into Numpy arrays ready to be used in training.  The container converts images into Numpy arrays with dimensions `(None, 224, 224, 1)`  with a script that leans heavily on [OpenCV](https://opencv.org) [[12]](#12).  Images are read from a single  directory.  The images are reduced to the the target resolution and are stacked in a single Numpy array.  Time and true position are parsed from the input file names which follow the format `<lat>+<long>+<YYYY>-<MM>-<DD>T<hh>:<mm>:<ss>.png`.  Date time groups are converted to `numpy.datetime64` and are normalized on `[0,1]` based on the temporal bounds on the training set.  Latitudes and longitudes are normalized on `[0,1]` based on the maximum extent of the geographic area under consideration and formed into an array with dimensions `(None, 2)`.
+We provide a Docker container to handle the task of preprocessing images into Numpy arrays ready to be used in training.  The container converts images into Numpy arrays with dimensions `(None, 224, 224, 1)`  with a script that leans heavily on [OpenCV](https://opencv.org) [[14]](#14).  Images are read from a single  directory.  The images are reduced to the the target resolution and are stacked in a single Numpy array.  Time and true position are parsed from the input file names which follow the format `<lat>+<long>+<YYYY>-<MM>-<DD>T<hh>:<mm>:<ss>.png`.  Date time groups are converted to `numpy.datetime64` and are normalized on `[0,1]` based on the temporal bounds on the training set.  Latitudes and longitudes are normalized on `[0,1]` based on the maximum extent of the geographic area under consideration and formed into an array with dimensions `(None, 2)`.
 
 The data are broken into training and validation sets based on a user-provided split and random assignment.
 
 [_Installing and running the preprocessor_](https://github.com/travisrmetz/w251-project/tree/master/training/preprocessor)
 
 ### 5.2 Training
-We use the [ktrain](https://towardsdatascience.com/ktrain-a-lightweight-wrapper-for-keras-to-help-train-neural-networks-82851ba889c) package to train the models [[13]](#13).  The `tensorflow.keras.model` object is wrapped in a `ktrain.learner` object to simplify training and access ktrain's built in callbacks.  We train using the `ktrain.learner.autofit` function with an initial maximum learning rate of 2-4.  The training function applies the triangular learning rate policy with reduction in maximum learning rate when a plateau is encountered on the validation loss introduced by Smith [[14]](#14).
+We use the [ktrain](https://towardsdatascience.com/ktrain-a-lightweight-wrapper-for-keras-to-help-train-neural-networks-82851ba889c) package to train the models [[15]](#15).  The `tensorflow.keras.model` object is wrapped in a `ktrain.learner` object to simplify training and access ktrain's built in callbacks.  We train using the `ktrain.learner.autofit` function with an initial maximum learning rate of 2-4.  The training function applies the triangular learning rate policy with reduction in maximum learning rate when a plateau is encountered on the validation loss introduced by Smith [[16]](#16).
 
 The container saves models in the `.h5` format to a user-specified directory that maps to the host.  In this way, the model can be saved either locally or to object storage.
 
@@ -268,27 +268,25 @@ You should now see your trained model in `data/models` on the host machine.
 
 <a id="6">[6]</a> T. Hitchens, "SASC Wants Alternative GPS By 2023," 29 June 2020, [breakingdefense.com/2020/06/sasc-wants-alternative-gps-by-2023/](breakingdefense.com/2020/06/sasc-wants-alternative-gps-by-2023/.).
 
-<a id="7">[7]</a> R. Whitman, "Astroinertial Navigation for Cruise Applications." Northrop Corporation, 1980.
-
-<a id="8">[8]</a> S. Lathuiliere, P. Mesejo, X. Alameda-Pineda and R. Horaud, "A Comprehensive Analysis of Deep Regression," [arXiv:1803.08450v2](https://arxiv.org/pdf/1803.08450.pdf), 2019.
-
-<a id="9">[9]</a> NATIONAL GEOSPATIAL-INTELLIGENCE AGENCY, _Pub No. 9, American Practical Navigator: an Epitome of Navigation_, 2017.
-
 <a id="7">[7]</a> M. Garvin, "Future of Celestial Navigation and the Ocean-Going Military Navigator," [OTS Master's Level Projects & Papers. 41](https://digitalcommons.odu.edu/ots_masters_projects/41), 2010.
 
-<a id="8">[8]</a> C. N. Alam, K. Manaf, A. R. Atmadja and D. K. Aurum, "Implementation of haversine formula for counting event visitor in the radius based on Android application," _2016 4th International Conference on Cyber and IT Service Management_, Bandung, 2016, pp. 1-6, doi: [10.1109/CITSM.2016.7577575]([https://ieeexplore.ieee.org/abstract/document/7577575](https://ieeexplore.ieee.org/abstract/document/7577575)).
+<a id="8">[8]</a> R. Whitman, "Astroinertial Navigation for Cruise Applications." Northrop Corporation, 1980.
 
-<a id="9">[9]</a> "NMEA 0183 INSTALLATION AND OPERATING GUIDELINES," retrieved from [https://www.navcen.uscg.gov/pdf/gmdss/taskforce/nmea_7.pdf](https://www.navcen.uscg.gov/pdf/gmdss/taskforce/nmea_7.pdf)
- 
-<a id="10">[10]</a> M. Gates, G. Zotti and A. Wolf, _Stellarium User Guide_, 2016. doi:[10.13140/RG.2.2.32203.59688](https://www.researchgate.net/publication/306257191_Stellarium_User_Guide)
+<a id="9">[9]</a> S. Lathuiliere, P. Mesejo, X. Alameda-Pineda and R. Horaud, "A Comprehensive Analysis of Deep Regression," [arXiv:1803.08450v2](https://arxiv.org/pdf/1803.08450.pdf), 2019.
 
-<a id="11">[11]</a> “Docker | TensorFlow” _TensorFlow_, TensorFlow.org, 15 July 2020, https://www.tensorflow.org/install/docker.
+<a id="10">[10]</a> NATIONAL GEOSPATIAL-INTELLIGENCE AGENCY, _Pub No. 9, American Practical Navigator: an Epitome of Navigation_, 2017.
 
-<a id="12">[12]</a> G. Bradski, G., "The OpenCV Library" _Dr. Dobb&#39;s Journal of Software Tools_, 2000.
+<a id="11">[11]</a> C. N. Alam, K. Manaf, A. R. Atmadja and D. K. Aurum, "Implementation of haversine formula for counting event visitor in the radius based on Android application," _2016 4th International Conference on Cyber and IT Service Management_, Bandung, 2016, pp. 1-6, doi: [10.1109/CITSM.2016.7577575]([https://ieeexplore.ieee.org/abstract/document/7577575](https://ieeexplore.ieee.org/abstract/document/7577575)).
 
-<a id="13">[13]</a> A. Maiya, "ktrain: A Low-Code Library for Augmented Machine Learning," [arXiv:2004.10703](https://arxiv.org/abs/2004.10703), 2020.
+<a id="12">[12]</a> M. Gates, G. Zotti and A. Wolf, _Stellarium User Guide_, 2016. doi:[10.13140/RG.2.2.32203.59688](https://www.researchgate.net/publication/306257191_Stellarium_User_Guide)
 
-<a id="14">[14]</a> L. Smith, "Cyclical Learning Rates for Training Neural Networks," [arXiv:1506.01186v6](https://arxiv.org/abs/1506.01186v6), 2017.
+<a id="13">[13]</a> “Docker | TensorFlow” _TensorFlow_, TensorFlow.org, 15 July 2020, https://www.tensorflow.org/install/docker.
+
+<a id="14">[14]</a> G. Bradski, G., "The OpenCV Library" _Dr. Dobb&#39;s Journal of Software Tools_, 2000.
+
+<a id="15">[15]</a> A. Maiya, "ktrain: A Low-Code Library for Augmented Machine Learning," [arXiv:2004.10703](https://arxiv.org/abs/2004.10703), 2020.
+
+<a id="16">[16]</a> L. Smith, "Cyclical Learning Rates for Training Neural Networks," [arXiv:1506.01186v6](https://arxiv.org/abs/1506.01186v6), 2017.
 
 *[Return to contents](#Contents)*
 
